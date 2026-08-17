@@ -36,7 +36,13 @@ export function ProfileSlip({ person }: { person: Person }) {
       {person.description ? <p className="font-bio text-[15px] leading-relaxed text-[var(--ink)]">{person.description}</p> : null}
       <dl className="grid gap-3 text-sm">
         <Row label="Born" value={person.birthDate || "Unknown"} />
-        <Row label="Birthplace" value={person.location || "Unknown"} />
+        <Row label="Birthplace" value={person.birthPlace || person.location || "Unknown"} />
+        {person.birthLastName ? <Row label="Birth surname" value={person.birthLastName} /> : null}
+        {person.deathDate ? <Row label="Died" value={person.deathDate} /> : null}
+        {person.deathPlace ? <Row label="Place of death" value={person.deathPlace} /> : null}
+        {person.burialPlace ? <Row label="Burial" value={person.burialPlace} /> : null}
+        {person.causeOfDeath ? <Row label="Cause of death" value={person.causeOfDeath} /> : null}
+        {person.occupation ? <Row label="Occupation" value={person.occupation} /> : null}
         <Row label="Generation" value={`${roman[gen] ?? gen + 1} generation`} />
       </dl>
       <RelGroup label="Parents" people={parents} onOpen={openProfile} />

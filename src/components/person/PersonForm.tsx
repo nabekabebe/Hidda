@@ -94,14 +94,25 @@ export function PersonForm({
       </label>
 
       <div className="grid gap-3 md:grid-cols-3">
+        <Field label="Prefix">
+          <input value={draft.prefix} onChange={(e) => set("prefix", e.target.value)} className={fieldClass} placeholder="Dr., Rev." />
+        </Field>
         <Field label="First name">
           <input ref={first} value={draft.firstName} onChange={(e) => set("firstName", e.target.value)} className={fieldClass} autoComplete="given-name" />
         </Field>
         <Field label="Middle">
           <input value={draft.middleName} onChange={(e) => set("middleName", e.target.value)} className={fieldClass} />
         </Field>
+      </div>
+      <div className="grid gap-3 md:grid-cols-3">
         <Field label="Last name">
           <input value={draft.lastName} onChange={(e) => set("lastName", e.target.value)} className={fieldClass} autoComplete="family-name" />
+        </Field>
+        <Field label="Birth surname">
+          <input value={draft.birthLastName} onChange={(e) => set("birthLastName", e.target.value)} className={fieldClass} />
+        </Field>
+        <Field label="Suffix">
+          <input value={draft.suffix} onChange={(e) => set("suffix", e.target.value)} className={fieldClass} placeholder="Jr., III" />
         </Field>
       </div>
       <Field label="Nickname">
@@ -122,8 +133,20 @@ export function PersonForm({
         <Field label="Born">
           <input type="date" value={draft.birthDate} onChange={(e) => set("birthDate", e.target.value)} className={fieldClass} />
         </Field>
+        <Field label="Birthplace">
+          <input value={draft.birthPlace} onChange={(e) => set("birthPlace", e.target.value)} className={fieldClass} />
+        </Field>
         <Field label="Died">
           <input type="date" value={draft.deathDate} onChange={(e) => set("deathDate", e.target.value)} className={fieldClass} />
+        </Field>
+        <Field label="Place of death">
+          <input value={draft.deathPlace} onChange={(e) => set("deathPlace", e.target.value)} className={fieldClass} />
+        </Field>
+        <Field label="Burial place">
+          <input value={draft.burialPlace} onChange={(e) => set("burialPlace", e.target.value)} className={fieldClass} />
+        </Field>
+        <Field label="Cause of death">
+          <input value={draft.causeOfDeath} onChange={(e) => set("causeOfDeath", e.target.value)} className={fieldClass} />
         </Field>
       </div>
       <Field label="Short description">
