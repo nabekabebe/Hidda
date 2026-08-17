@@ -1,5 +1,5 @@
-import { DEFAULT_ATLAS_NAME, emptyInscriptions, normalizeSnapshot } from "../src/domain/share";
-import { SEED_PEOPLE, SEED_RELATIONSHIPS } from "../src/domain/seed";
+import { DEFAULT_ATLAS_NAME, emptyInscriptions, normalizeSnapshot } from "../src/domain/share.js";
+import { SEED_PEOPLE, SEED_RELATIONSHIPS } from "../src/domain/seed.js";
 import {
   personFromDraft,
   type AtlasInscription,
@@ -8,8 +8,8 @@ import {
   type PersonDraft,
   type Relationship,
   type RelationshipKind,
-} from "../src/domain/types";
-import type { Sql } from "./db";
+} from "../src/domain/types.js";
+import type { Sql } from "./db.js";
 
 interface PersonRow {
   id: string;

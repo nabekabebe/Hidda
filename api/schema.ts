@@ -1,4 +1,4 @@
-import type { Sql } from "./db";
+import type { Sql } from "./db.js";
 
 export async function ensureSchema(sql: Sql): Promise<void> {
   await sql`
