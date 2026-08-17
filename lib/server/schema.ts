@@ -52,11 +52,6 @@ export async function ensureSchema(sql: Sql): Promise<void> {
   await sql`ALTER TABLE people ADD COLUMN IF NOT EXISTS burial_place TEXT NOT NULL DEFAULT ''`;
   await sql`ALTER TABLE people ADD COLUMN IF NOT EXISTS cause_of_death TEXT NOT NULL DEFAULT ''`;
   await sql`
-    ALTER TABLE shares ADD COLUMN IF NOT EXISTS expires_at TIMESTAMPTZ
-  `;
-  await sql`ALTER TABLE shares ADD COLUMN IF NOT EXISTS password_hash TEXT`;
-  await sql`ALTER TABLE shares ADD COLUMN IF NOT EXISTS revoked BOOLEAN NOT NULL DEFAULT FALSE`;
-  await sql`
     CREATE TABLE IF NOT EXISTS shares (
       token TEXT PRIMARY KEY,
       permission TEXT NOT NULL,
@@ -66,4 +61,7 @@ export async function ensureSchema(sql: Sql): Promise<void> {
       created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     )
   `;
+  await sql`ALTER TABLE shares ADD COLUMN IF NOT EXISTS expires_at TIMESTAMPTZ`;
+  await sql`ALTER TABLE shares ADD COLUMN IF NOT EXISTS password_hash TEXT`;
+  await sql`ALTER TABLE shares ADD COLUMN IF NOT EXISTS revoked BOOLEAN NOT NULL DEFAULT FALSE`;
 }

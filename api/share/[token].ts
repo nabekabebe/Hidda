@@ -1,8 +1,8 @@
 import { normalizeSnapshot } from "../../src/domain/share.js";
-import { getSql } from "../db.js";
-import type { ApiRequest, ApiResponse } from "../http.js";
-import { ensureSchema } from "../schema.js";
-import { getShare, tokenFromApiRequest, updateShareSnapshot } from "../share-repo.js";
+import { getSql } from "../../lib/server/db.js";
+import type { ApiRequest, ApiResponse } from "../../lib/server/http.js";
+import { ensureSchema } from "../../lib/server/schema.js";
+import { getShare, tokenFromApiRequest, updateShareSnapshot } from "../../lib/server/share-repo.js";
 
 export default async function handler(req: ApiRequest, res: ApiResponse) {
   const token = tokenFromApiRequest(req);

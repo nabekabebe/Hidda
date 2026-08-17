@@ -1,6 +1,6 @@
-import type { ApiRequest, ApiResponse } from "./http.js";
-import { getDatabaseUrl, getSql } from "./db.js";
-import { ensureSchema } from "./schema.js";
+import type { ApiRequest, ApiResponse } from "../lib/server/http.js";
+import { getDatabaseUrl, getSql } from "../lib/server/db.js";
+import { ensureSchema } from "../lib/server/schema.js";
 
 export default async function handler(_req: ApiRequest, res: ApiResponse) {
   const url = getDatabaseUrl();

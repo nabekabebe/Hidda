@@ -1,5 +1,5 @@
 import type { AtlasInscription, FamilySnapshot, PersonDraft, Relationship, RelationshipKind } from "../src/domain/types.js";
-import { getSql } from "./db.js";
+import { getSql } from "../lib/server/db.js";
 import {
   clearAll,
   createPerson,
@@ -13,9 +13,9 @@ import {
   updateAtlas,
   updatePerson,
   updateRelationship,
-} from "./family-repo.js";
-import type { ApiRequest, ApiResponse } from "./http.js";
-import { ensureSchema } from "./schema.js";
+} from "../lib/server/family-repo.js";
+import type { ApiRequest, ApiResponse } from "../lib/server/http.js";
+import { ensureSchema } from "../lib/server/schema.js";
 
 type FamilyOp =
   | { op: "createPerson"; draft: PersonDraft }

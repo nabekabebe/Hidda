@@ -1,7 +1,7 @@
-import type { ApiRequest, ApiResponse } from "./http.js";
-import { getSql } from "./db.js";
-import { insertShare, parseShareBody } from "./share-repo.js";
-import { ensureSchema } from "./schema.js";
+import type { ApiRequest, ApiResponse } from "../lib/server/http.js";
+import { getSql } from "../lib/server/db.js";
+import { insertShare, parseShareBody } from "../lib/server/share-repo.js";
+import { ensureSchema } from "../lib/server/schema.js";
 
 export default async function handler(req: ApiRequest, res: ApiResponse) {
   if (req.method !== "POST") {

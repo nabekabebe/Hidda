@@ -1,5 +1,5 @@
-import { isShareRecord, normalizeSnapshot } from "../src/domain/share.js";
-import type { FamilySnapshot, ShareRecord } from "../src/domain/types.js";
+import { isShareRecord, normalizeSnapshot } from "../../src/domain/share.js";
+import type { FamilySnapshot, ShareRecord } from "../../src/domain/types.js";
 import type { Sql } from "./db.js";
 
 interface ShareRow {
