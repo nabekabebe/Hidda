@@ -1,5 +1,6 @@
 import { EventList } from "@/components/person/EventList";
 import { PersonGallery } from "@/components/person/PersonGallery";
+import { SourceList } from "@/components/person/SourceList";
 import { StarDisk } from "@/components/person/StarDisk";
 import { Button } from "@/components/ui/Button";
 import { childrenOf, generationIndex, parentsOf, partnerEdgesOf, relationshipLabel, siblingsOf } from "@/domain/graph";
@@ -59,6 +60,7 @@ export function ProfileSlip({ person }: { person: Person }) {
       </dl>
       <EventList personId={person.id} />
       <PersonGallery personId={person.id} />
+      <SourceList personId={person.id} />
       <PersonComments personId={person.id} />
       <RelGroup label="Parents" people={parents} onOpen={openProfile} />
       <PartnershipGroup personId={person.id} edges={partners} onOpen={openProfile} canEdit={canEdit} />
