@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/Button";
 import { displayName } from "@/domain/types";
-import { sharePath, sliceSnapshot } from "@/domain/share";
+import { isShareRecord, normalizeSnapshot, sharePath, sliceSnapshot } from "@/domain/share";
 import { createShareRecord } from "@/api/shareClient";
 import { captureSnapshotPng, downloadBlob, downloadDataUrl, fileSlug, pngDataUrlToPdfBlob } from "@/lib/exportAtlas";
 import { useFamilyStore } from "@/store/useFamilyStore";
@@ -13,6 +13,7 @@ export function SharePanel() {
   const people = useFamilyStore((s) => s.people);
   const atlasName = useFamilyStore((s) => s.atlasName);
   const setAtlasName = useFamilyStore((s) => s.setAtlasName);
+  const importSnapshot = useFamilyStore((s) => s.importSnapshot);
   const canEdit = useFamilyStore((s) => s.access !== "view");
   const selected = people.find((person) => person.id === selectedId);
   const [permission, setPermission] = useState<"view" | "edit">("view");
@@ -63,6 +64,23 @@ export function SharePanel() {
     const blob = new Blob([JSON.stringify(sliced, null, 2)], { type: "application/json" });
     downloadBlob(blob, `${fileSlug(exportName())}.json`);
     toast.success("Catalog exported");
+  }
+
+  async function importJson(file?: File | null) {
+    if (!file || !canEdit) return;
+    try {
+      const parsed = JSON.parse(await file.text()) as unknown;
+      const raw = isShareRecord(parsed) ? parsed.snapshot : parsed;
+      if (!raw || typeof raw !== "object" || !Array.isArray((raw as { people?: unknown }).people)) {
+        toast.error("That file does not look like a Hidda catalog.");
+        return;
+      }
+      const next = normalizeSnapshot(raw);
+      await importSnapshot(next);
+      toast.success("Catalog restored");
+    } catch {
+      toast.error("Could not read that JSON backup.");
+    }
   }
 
   async function exportPng() {
@@ -143,6 +161,12 @@ export function SharePanel() {
       ) : null}
 
       <div className="flex flex-wrap justify-end gap-2">
+        {canEdit ? (
+          <label className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-full border border-[color-mix(in_srgb,var(--ink)_16%,transparent)] px-4 py-2 text-sm">
+            Import JSON
+            <input type="file" accept="application/json,.json" className="sr-only" onChange={(event) => void importJson(event.target.files?.[0])} />
+          </label>
+        ) : null}
         <Button tone="ghost" type="button" disabled={busy} onClick={exportJson}>
           Export JSON
         </Button>
