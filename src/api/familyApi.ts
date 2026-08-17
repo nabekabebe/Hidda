@@ -11,7 +11,7 @@ import {
   type RelationshipKind,
 } from "@/domain/types";
 
-const STORAGE_KEY = "night-atlas.family.v1";
+export const STORAGE_KEY = "night-atlas.family.v1";
 
 export interface FamilyApi {
   load(): Promise<FamilySnapshot>;
@@ -52,18 +52,24 @@ export class MemoryFamilyApi implements FamilyApi {
   private catalog = emptyCatalog();
   private readonly persistFn: (snapshot: FamilySnapshot) => void;
   private readonly readOnly: boolean;
+  private readonly storageKey: string;
+  private readonly seedIfEmpty: boolean;
 
   constructor(options?: {
     snapshot?: FamilySnapshot;
     persist?: (snapshot: FamilySnapshot) => void;
     readOnly?: boolean;
     skipHydrate?: boolean;
+    storageKey?: string;
+    seedIfEmpty?: boolean;
   }) {
     this.readOnly = Boolean(options?.readOnly);
+    this.storageKey = options?.storageKey ?? STORAGE_KEY;
+    this.seedIfEmpty = options?.seedIfEmpty ?? this.storageKey === STORAGE_KEY;
     this.persistFn =
       options?.persist ??
       ((snapshot) => {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(snapshot));
+        localStorage.setItem(this.storageKey, JSON.stringify(snapshot));
       });
     if (options?.snapshot) {
       this.applySnapshot(options.snapshot, false);
@@ -74,7 +80,7 @@ export class MemoryFamilyApi implements FamilyApi {
 
   private hydrate() {
     try {
-      const raw = localStorage.getItem(STORAGE_KEY);
+      const raw = localStorage.getItem(this.storageKey);
       if (raw) {
         this.applySnapshot(normalizeSnapshot(JSON.parse(raw) as FamilySnapshot), false);
         return;
@@ -82,7 +88,7 @@ export class MemoryFamilyApi implements FamilyApi {
     } catch {
       /* empty atlas */
     }
-    this.applySeed();
+    if (this.seedIfEmpty) this.applySeed();
   }
 
   private applySnapshot(snapshot: FamilySnapshot, persist: boolean) {
@@ -279,6 +285,8 @@ export function setWorkingApi(api: FamilyApi): void {
   workingApi = api;
 }
 
-export function resetWorkingApi(): void {
-  workingApi = familyApi;
+export function openOwnerApi(treeId?: string | null): FamilyApi {
+  if (import.meta.env.VITE_FAMILY_API === "http") return new HttpFamilyApi();
+  if (!treeId) return new MemoryFamilyApi();
+  return new MemoryFamilyApi({ storageKey: `night-atlas.tree.${treeId}`, seedIfEmpty: false });
 }

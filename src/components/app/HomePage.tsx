@@ -1,3 +1,4 @@
+import { AuthPanel } from "@/components/app/AuthPanel";
 import { StarDisk } from "@/components/person/StarDisk";
 import { RelLines } from "@/components/tree/RelLines";
 import { NODE_W } from "@/domain/layout";
@@ -102,6 +103,7 @@ export function HomePage() {
             Start a new atlas
           </Button>
         </div>
+        <AuthPanel />
         <p className="text-xs text-[var(--muted)]">Demonstration people are synthetic.</p>
       </div>
     </div>

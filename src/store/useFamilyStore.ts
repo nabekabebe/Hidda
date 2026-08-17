@@ -1,4 +1,4 @@
-import { getWorkingApi, MemoryFamilyApi, resetWorkingApi, setWorkingApi } from "@/api/familyApi";
+import { getWorkingApi, MemoryFamilyApi, openOwnerApi, setWorkingApi } from "@/api/familyApi";
 import { loadShareRecord, saveShareSnapshot } from "@/api/shareClient";
 import {
   alreadyRelated,
@@ -25,6 +25,7 @@ import {
   type Relationship,
   type TreeFilters,
 } from "@/domain/types";
+import { useAccountStore } from "@/store/useAccountStore";
 import { create } from "zustand";
 
 export type ThemeMode = "dark" | "light";
@@ -151,7 +152,8 @@ export const useFamilyStore = create<FamilyState>((set, get) => ({
   requestCenterId: null,
 
   hydrate: async () => {
-    resetWorkingApi();
+    const treeId = useAccountStore.getState().currentTreeId;
+    setWorkingApi(openOwnerApi(treeId));
     const snap = await getWorkingApi().load();
     const selected = snap.people.some((person) => person.id === SEED_FOCUS_ID)
       ? SEED_FOCUS_ID

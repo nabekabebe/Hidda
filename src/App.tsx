@@ -1,6 +1,7 @@
 import { HomePage } from "@/components/app/HomePage";
 import { TreePage } from "@/components/app/TreePage";
 import { ReducedMotionContext } from "@/lib/motion";
+import { useAccountStore } from "@/store/useAccountStore";
 import { useFamilyStore } from "@/store/useFamilyStore";
 import { useReducedMotion } from "motion/react";
 import { useEffect, type ReactNode } from "react";
@@ -9,10 +10,12 @@ import { Toaster, toast } from "sonner";
 
 function OwnerHydrate({ children }: { children: ReactNode }) {
   const hydrate = useFamilyStore((s) => s.hydrate);
+  const hydrateAccount = useAccountStore((s) => s.hydrate);
 
   useEffect(() => {
+    hydrateAccount();
     void hydrate();
-  }, [hydrate]);
+  }, [hydrate, hydrateAccount]);
 
   return children;
 }
