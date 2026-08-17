@@ -107,6 +107,7 @@ interface FamilyState {
   resetDemo: () => Promise<void>;
   startEmpty: () => Promise<void>;
   setAtlasName: (name: string) => Promise<void>;
+  setHomePerson: (id: string | null) => Promise<void>;
   setPlacingLabel: (value: boolean) => void;
   selectInscription: (id: string | null) => void;
   addInscription: (input: { x: number; y: number; kind: AtlasInscription["kind"]; text?: string }) => Promise<string>;
@@ -389,6 +390,11 @@ export const useFamilyStore = create<FamilyState>((set, get) => ({
       : [{ id: crypto.randomUUID(), text: snap.name, x: 240, y: -56, kind: "title" as const }, ...snap.inscriptions];
     const next = inscriptions === snap.inscriptions ? snap : await getWorkingApi().updateAtlas({ inscriptions });
     set(atlasFields(next));
+  },
+
+  setHomePerson: async (id) => {
+    const snap = await getWorkingApi().updateAtlas({ homePersonId: id });
+    set(atlasFields(snap));
   },
 
   setPlacingLabel: (value) => set({ placingLabel: value, selectedInscriptionId: value ? null : get().selectedInscriptionId }),

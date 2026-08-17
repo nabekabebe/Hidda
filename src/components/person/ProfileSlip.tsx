@@ -3,6 +3,7 @@ import { PersonGallery } from "@/components/person/PersonGallery";
 import { StarDisk } from "@/components/person/StarDisk";
 import { Button } from "@/components/ui/Button";
 import { childrenOf, generationIndex, parentsOf, partnerEdgesOf, relationshipLabel, siblingsOf } from "@/domain/graph";
+import { relationToHome } from "@/domain/kin";
 import { partnerTypeFromDates, partnershipFacts, partnershipSummary } from "@/domain/partnership";
 import { catalogYear, displayName, type PartnerKind, type Person, type Relationship } from "@/domain/types";
 import { useFamilyStore } from "@/store/useFamilyStore";
@@ -18,6 +19,9 @@ export function ProfileSlip({ person }: { person: Person }) {
   const centerOn = useFamilyStore((s) => s.centerOn);
   const openProfile = useFamilyStore((s) => s.openProfile);
   const canEdit = useFamilyStore((s) => s.access !== "view");
+  const homePersonId = useFamilyStore((s) => s.homePersonId);
+  const setHomePerson = useFamilyStore((s) => s.setHomePerson);
+  const kin = relationToHome(graph, person.id, homePersonId);
   const parents = parentsOf(graph, person.id);
   const children = childrenOf(graph, person.id);
   const partners = partnerEdgesOf(graph, person.id);
@@ -35,6 +39,9 @@ export function ProfileSlip({ person }: { person: Person }) {
           {catalogYear(person) ? (
             <div className="catalog mt-2 text-lg tracking-[0.16em] text-[var(--gold)]">{catalogYear(person)}</div>
           ) : null}
+          {kin ? (
+            <div className="catalog mt-1 text-sm tracking-[0.12em] text-[var(--gold)]">{kin}</div>
+          ) : null}
         </div>
       </div>
       {person.description ? <p className="font-bio text-[15px] leading-relaxed text-[var(--ink)]">{person.description}</p> : null}
@@ -47,6 +54,7 @@ export function ProfileSlip({ person }: { person: Person }) {
         {person.burialPlace ? <Row label="Burial" value={person.burialPlace} /> : null}
         {person.causeOfDeath ? <Row label="Cause of death" value={person.causeOfDeath} /> : null}
         {person.occupation ? <Row label="Occupation" value={person.occupation} /> : null}
+        {kin ? <Row label="Related as" value={kin} /> : null}
         <Row label="Generation" value={`${roman[gen] ?? gen + 1} generation`} />
       </dl>
       <EventList personId={person.id} />
@@ -55,7 +63,7 @@ export function ProfileSlip({ person }: { person: Person }) {
       <PartnershipGroup personId={person.id} edges={partners} onOpen={openProfile} canEdit={canEdit} />
       <RelGroup label="Siblings" people={siblings} onOpen={openProfile} />
       <RelGroup label="Children" people={children} onOpen={openProfile} />
-      <div className="mt-auto grid grid-cols-3 gap-2">
+      <div className="mt-auto grid grid-cols-2 gap-2">
         {canEdit ? (
           <Button tone="ghost" onClick={() => openForm({ personId: person.id })} aria-label="Edit person">
             <PencilSimple size={16} />
@@ -64,6 +72,11 @@ export function ProfileSlip({ person }: { person: Person }) {
         <Button tone="ghost" onClick={() => centerOn(person.id)} aria-label="Focus on this person">
           <UserFocus size={16} />
         </Button>
+        {canEdit ? (
+          <Button tone="ghost" onClick={() => void setHomePerson(person.id)} aria-label="Set as home person">
+            Home
+          </Button>
+        ) : <span />}
         {canEdit ? (
           <Button tone="ghost" onClick={() => setPanel({ type: "confirm-delete", personId: person.id })} aria-label="Delete person">
             <Trash size={16} />

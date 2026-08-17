@@ -1,7 +1,8 @@
 import { StarDisk } from "@/components/person/StarDisk";
 import { NODE_W } from "@/domain/layout";
-import { childrenOf } from "@/domain/graph";
 import { catalogYear, displayName, type CompassRelation, type Person } from "@/domain/types";
+import { childrenOf } from "@/domain/graph";
+import { relationToHome } from "@/domain/kin";
 import { cn } from "@/lib/cn";
 import { useFamilyStore } from "@/store/useFamilyStore";
 import { CaretDown } from "@phosphor-icons/react";
@@ -29,6 +30,8 @@ export const PersonNode = memo(function PersonNode({
   const toggleCollapsed = useFamilyStore((s) => s.toggleCollapsed);
   const collapsedIds = useFamilyStore((s) => s.collapsedIds);
   const graph = useFamilyStore((s) => s.graph)();
+  const homePersonId = useFamilyStore((s) => s.homePersonId);
+  const kin = relationToHome(graph, person.id, homePersonId);
   const canEdit = useFamilyStore((s) => s.access !== "view");
   const hasKids = childrenOf(graph, person.id).length > 0;
   const collapsed = collapsedIds.includes(person.id);
@@ -73,6 +76,9 @@ export const PersonNode = memo(function PersonNode({
         </div>
         {catalogYear(person) ? (
           <div className="catalog mt-1 text-sm tracking-[0.12em] text-[var(--gold)]">{catalogYear(person)}</div>
+        ) : null}
+        {kin && kin !== "Home person" ? (
+          <div className="catalog mt-1 text-sm tracking-[0.12em] text-[var(--muted)]">{kin}</div>
         ) : null}
       </div>
       {hasKids ? (
