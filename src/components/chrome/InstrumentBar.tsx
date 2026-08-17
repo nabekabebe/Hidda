@@ -6,6 +6,7 @@ import {
   Funnel,
   House,
   Keyboard,
+  List,
   MagnifyingGlass,
   Minus,
   Moon,
@@ -52,6 +53,7 @@ export function InstrumentBar() {
           <Tool gold icon={<TextT size={18} />} label="Place a label" shortcut="T" onClick={() => setPlacingLabel(!placingLabel)} active={placingLabel} />
         ) : null}
         <Tool gold icon={<ShareNetwork size={18} />} label="Share and export" onClick={() => setPanel({ type: "share" })} />
+        <Tool gold icon={<List size={18} />} label="Charts and lists" onClick={() => setPanel({ type: "views" })} />
         <Tool gold icon={<House size={18} />} label="Home" shortcut="H" onClick={() => navigate("/")} />
         {selectedId ? (
           <Tool gold icon={<BookOpen size={18} />} label="Open catalog" onClick={() => openProfile(selectedId)} className="md:hidden" />

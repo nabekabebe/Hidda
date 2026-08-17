@@ -37,6 +37,7 @@ export type Panel =
   | { type: "filters" }
   | { type: "shortcuts" }
   | { type: "share" }
+  | { type: "views" }
   | { type: "confirm-delete"; personId: string };
 
 interface FamilyState {

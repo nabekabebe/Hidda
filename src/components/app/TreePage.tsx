@@ -3,6 +3,7 @@ import { FilterPanel } from "@/components/chrome/FilterPanel";
 import { InstrumentBar } from "@/components/chrome/InstrumentBar";
 import { SearchPalette } from "@/components/chrome/SearchPalette";
 import { SharePanel } from "@/components/chrome/SharePanel";
+import { ViewsPanel } from "@/components/chrome/ViewsPanel";
 import { EmptySky } from "@/components/app/EmptySky";
 import { formTitle } from "@/components/person/formTitle";
 import { PersonComposer } from "@/components/person/PersonComposer";
@@ -104,6 +105,7 @@ export function TreePage() {
   const filtersOpen = panel.type === "filters";
   const shortcutsOpen = panel.type === "shortcuts";
   const shareOpen = panel.type === "share";
+  const viewsOpen = panel.type === "views";
   const deleting = panel.type === "confirm-delete" ? people.find((person) => person.id === panel.personId) : undefined;
 
   return (
@@ -175,6 +177,12 @@ export function TreePage() {
       </Modal>
       <Sheet open={shareOpen && mobile} title="Share and export" onClose={closePanel}>
         <SharePanel />
+      </Sheet>
+      <Modal open={viewsOpen && !mobile} title="Charts and lists" onClose={closePanel} wide>
+        {viewsOpen ? <ViewsPanel /> : null}
+      </Modal>
+      <Sheet open={viewsOpen && mobile} title="Charts and lists" onClose={closePanel}>
+        {viewsOpen ? <ViewsPanel /> : null}
       </Sheet>
       <Modal open={Boolean(deleting)} title="Remove this star?" onClose={closePanel}>
         {deleting ? (
