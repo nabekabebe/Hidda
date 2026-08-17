@@ -1,4 +1,4 @@
-import type { AtlasInscription, FamilySnapshot, PersonDraft, RelationshipKind } from "../src/domain/types.js";
+import type { AtlasInscription, FamilySnapshot, PersonDraft, Relationship, RelationshipKind } from "../src/domain/types.js";
 import { getSql } from "./db.js";
 import {
   clearAll,
@@ -11,6 +11,7 @@ import {
   replaceSnapshot,
   updateAtlas,
   updatePerson,
+  updateRelationship,
 } from "./family-repo.js";
 import type { ApiRequest, ApiResponse } from "./http.js";
 import { ensureSchema } from "./schema.js";
@@ -20,6 +21,7 @@ type FamilyOp =
   | { op: "updatePerson"; id: string; patch: Partial<PersonDraft> }
   | { op: "deletePerson"; id: string }
   | { op: "createRelationship"; sourcePersonId: string; targetPersonId: string; type: RelationshipKind; metadata?: Record<string, string> }
+  | { op: "updateRelationship"; id: string; patch: Partial<Pick<Relationship, "type" | "metadata">> }
   | { op: "deleteRelationship"; id: string }
   | { op: "resetToSeed" }
   | { op: "clearAll" }
@@ -75,6 +77,9 @@ export default async function handler(req: ApiRequest, res: ApiResponse) {
         res.status(201).json(
           await createRelationship(sql, body.sourcePersonId, body.targetPersonId, body.type, body.metadata),
         );
+        return;
+      case "updateRelationship":
+        res.status(200).json(await updateRelationship(sql, body.id, body.patch));
         return;
       case "deleteRelationship":
         await deleteRelationship(sql, body.id);

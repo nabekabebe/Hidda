@@ -127,8 +127,9 @@ function rel(
   sourcePersonId: string,
   targetPersonId: string,
   type: Relationship["type"],
+  metadata: Record<string, string> = {},
 ): Relationship {
-  return { id, sourcePersonId, targetPersonId, type, metadata: {}, createdAt: now };
+  return { id, sourcePersonId, targetPersonId, type, metadata, createdAt: now };
 }
 
 export const SEED_RELATIONSHIPS: Relationship[] = [
@@ -136,9 +137,9 @@ export const SEED_RELATIONSHIPS: Relationship[] = [
   rel("r2", "ruth", "mira", "biological-parent"),
   rel("r3", "tomas", "elias", "biological-parent"),
   rel("r4", "ruth", "elias", "biological-parent"),
-  rel("r5", "tomas", "ruth", "spouse"),
+  rel("r5", "tomas", "ruth", "spouse", { marriedOn: "1946-06-12", marriedPlace: "Kingston" }),
   rel("r6", "mira", "elias", "sibling"),
-  rel("r7", "mira", "daniel", "spouse"),
+  rel("r7", "mira", "daniel", "spouse", { marriedOn: "1978-09-03", marriedPlace: "Brooklyn" }),
   rel("r8", "mira", "noor", "biological-parent"),
   rel("r9", "daniel", "noor", "biological-parent"),
   rel("r10", "mira", "levi", "biological-parent"),

@@ -57,15 +57,27 @@ export function childrenOf(graph: FamilyGraph, id: string): { person: Person; ty
 }
 
 export function partnersOf(graph: FamilyGraph, id: string): { person: Person; type: RelationshipKind }[] {
-  const found: { person: Person; type: RelationshipKind }[] = [];
+  return partnerEdgesOf(graph, id).map((item) => ({ person: item.person, type: item.rel.type }));
+}
+
+export function partnerEdgesOf(
+  graph: FamilyGraph,
+  id: string,
+): { person: Person; rel: Relationship }[] {
+  const found: { person: Person; rel: Relationship }[] = [];
   for (const rel of graph.relationships) {
     if (!PARTNER_TYPES.includes(rel.type as (typeof PARTNER_TYPES)[number])) continue;
     const other = otherId(rel, id);
     if (!other) continue;
     const person = graph.byId.get(other);
-    if (person) found.push({ person, type: rel.type });
+    if (person) found.push({ person, rel });
   }
-  return uniquePeople(found);
+  const seen = new Set<string>();
+  return found.filter((item) => {
+    if (seen.has(item.person.id)) return false;
+    seen.add(item.person.id);
+    return true;
+  });
 }
 
 export function siblingsOf(graph: FamilyGraph, id: string): { person: Person; type: RelationshipKind }[] {

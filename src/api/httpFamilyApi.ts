@@ -48,6 +48,13 @@ export class HttpFamilyApi implements FamilyApi {
     });
   }
 
+  updateRelationship(
+    id: string,
+    patch: Partial<Pick<Relationship, "type" | "metadata">>,
+  ): Promise<Relationship> {
+    return request("/api/family", { method: "POST", body: JSON.stringify({ op: "updateRelationship", id, patch }) });
+  }
+
   deleteRelationship(id: string): Promise<void> {
     return request("/api/family", { method: "POST", body: JSON.stringify({ op: "deleteRelationship", id }) });
   }

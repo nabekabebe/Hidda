@@ -24,6 +24,10 @@ export interface FamilyApi {
     type: RelationshipKind,
     metadata?: Record<string, string>,
   ): Promise<Relationship>;
+  updateRelationship(
+    id: string,
+    patch: Partial<Pick<Relationship, "type" | "metadata">>,
+  ): Promise<Relationship>;
   deleteRelationship(id: string): Promise<void>;
   resetToSeed(): Promise<FamilySnapshot>;
   clearAll(): Promise<FamilySnapshot>;
@@ -194,6 +198,23 @@ export class MemoryFamilyApi implements FamilyApi {
     this.relationships.set(rel.id, rel);
     this.persist();
     return rel;
+  }
+
+  async updateRelationship(
+    id: string,
+    patch: Partial<Pick<Relationship, "type" | "metadata">>,
+  ): Promise<Relationship> {
+    this.guardWrite();
+    const current = this.relationships.get(id);
+    if (!current) throw new Error("Relationship not found");
+    const next: Relationship = {
+      ...current,
+      type: patch.type ?? current.type,
+      metadata: patch.metadata ?? current.metadata,
+    };
+    this.relationships.set(id, next);
+    this.persist();
+    return next;
   }
 
   async deleteRelationship(id: string): Promise<void> {

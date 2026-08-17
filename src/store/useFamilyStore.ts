@@ -89,6 +89,10 @@ interface FamilyState {
   savePerson: (id: string | undefined, draft: PersonDraft) => Promise<Person>;
   removePerson: (id: string) => Promise<void>;
   removeRelationship: (id: string) => Promise<void>;
+  updateRelationship: (
+    id: string,
+    patch: Partial<Pick<Relationship, "type" | "metadata">>,
+  ) => Promise<void>;
   toggleCollapsed: (id: string) => void;
   expandAll: () => void;
   collapseAll: () => void;
@@ -312,6 +316,12 @@ export const useFamilyStore = create<FamilyState>((set, get) => ({
 
   removeRelationship: async (id) => {
     await getWorkingApi().deleteRelationship(id);
+    const snap = await getWorkingApi().load();
+    set(atlasFields(snap));
+  },
+
+  updateRelationship: async (id, patch) => {
+    await getWorkingApi().updateRelationship(id, patch);
     const snap = await getWorkingApi().load();
     set(atlasFields(snap));
   },

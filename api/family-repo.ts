@@ -301,6 +301,29 @@ export async function createRelationship(
   return rel;
 }
 
+export async function updateRelationship(
+  sql: Sql,
+  id: string,
+  patch: Partial<Pick<Relationship, "type" | "metadata">>,
+): Promise<Relationship> {
+  const rows = (await sql`SELECT * FROM relationships WHERE id = ${id} LIMIT 1`) as RelationshipRow[];
+  const current = rows[0];
+  if (!current) throw new Error("Relationship not found");
+  const rel = relationshipFromRow(current);
+  const next: Relationship = {
+    ...rel,
+    type: patch.type ?? rel.type,
+    metadata: patch.metadata ?? rel.metadata,
+  };
+  await sql`
+    UPDATE relationships SET
+      type = ${next.type},
+      metadata = ${JSON.stringify(next.metadata)}::jsonb
+    WHERE id = ${id}
+  `;
+  return next;
+}
+
 export async function deleteRelationship(sql: Sql, id: string): Promise<void> {
   await sql`DELETE FROM relationships WHERE id = ${id}`;
 }

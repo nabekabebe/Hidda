@@ -1,9 +1,11 @@
 import { StarDisk } from "@/components/person/StarDisk";
 import { Button } from "@/components/ui/Button";
-import { childrenOf, generationIndex, parentsOf, partnersOf, relationshipLabel, siblingsOf } from "@/domain/graph";
-import { catalogYear, displayName, type Person } from "@/domain/types";
+import { childrenOf, generationIndex, parentsOf, partnerEdgesOf, relationshipLabel, siblingsOf } from "@/domain/graph";
+import { partnerTypeFromDates, partnershipFacts, partnershipSummary } from "@/domain/partnership";
+import { catalogYear, displayName, type PartnerKind, type Person, type Relationship } from "@/domain/types";
 import { useFamilyStore } from "@/store/useFamilyStore";
 import { PencilSimple, Trash, UserFocus } from "@phosphor-icons/react";
+import { useState } from "react";
 
 const roman = ["I", "II", "III", "IV", "V", "VI", "VII"];
 
@@ -16,7 +18,7 @@ export function ProfileSlip({ person }: { person: Person }) {
   const canEdit = useFamilyStore((s) => s.access !== "view");
   const parents = parentsOf(graph, person.id);
   const children = childrenOf(graph, person.id);
-  const partners = partnersOf(graph, person.id);
+  const partners = partnerEdgesOf(graph, person.id);
   const siblings = siblingsOf(graph, person.id);
   const gen = generationIndex(graph, person.id);
 
@@ -46,7 +48,7 @@ export function ProfileSlip({ person }: { person: Person }) {
         <Row label="Generation" value={`${roman[gen] ?? gen + 1} generation`} />
       </dl>
       <RelGroup label="Parents" people={parents} onOpen={openProfile} />
-      <RelGroup label="Partner" people={partners} onOpen={openProfile} />
+      <PartnershipGroup personId={person.id} edges={partners} onOpen={openProfile} canEdit={canEdit} />
       <RelGroup label="Siblings" people={siblings} onOpen={openProfile} />
       <RelGroup label="Children" people={children} onOpen={openProfile} />
       <div className="mt-auto grid grid-cols-3 gap-2">
@@ -76,6 +78,94 @@ function Row({ label, value }: { label: string; value: string }) {
     </div>
   );
 }
+
+function PartnershipGroup({
+  personId,
+  edges,
+  onOpen,
+  canEdit,
+}: {
+  personId: string;
+  edges: { person: Person; rel: Relationship }[];
+  onOpen: (id: string) => void;
+  canEdit: boolean;
+}) {
+  if (!edges.length) return null;
+  return (
+    <section>
+      <h3 className="catalog mb-2 text-[11px] uppercase tracking-[0.18em] text-[var(--gold)]">Partner</h3>
+      <ul className="grid gap-3">
+        {edges.map((item) => (
+          <li key={item.rel.id} className="grid gap-2">
+            <button type="button" onClick={() => onOpen(item.person.id)} className="flex w-full items-center gap-3 rounded-2xl px-1 py-1 text-left">
+              <StarDisk person={item.person} size={36} />
+              <span>
+                <span className="catalog block text-base uppercase tracking-[0.12em] leading-none">{displayName(item.person)}</span>
+                <span className="text-xs text-[var(--muted)]">
+                  {partnershipSummary(item.rel) || relationshipLabel(item.rel.type)}
+                </span>
+              </span>
+            </button>
+            {canEdit ? <PartnershipEditor key={`${personId}-${item.rel.id}`} rel={item.rel} /> : null}
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
+function PartnershipEditor({ rel }: { rel: Relationship }) {
+  const updateRelationship = useFamilyStore((s) => s.updateRelationship);
+  const facts = partnershipFacts(rel);
+  const [open, setOpen] = useState(false);
+  const [marriedOn, setMarriedOn] = useState(facts.marriedOn);
+  const [marriedPlace, setMarriedPlace] = useState(facts.marriedPlace);
+  const [endedOn, setEndedOn] = useState(facts.endedOn);
+  const [endedPlace, setEndedPlace] = useState(facts.endedPlace);
+
+  async function save() {
+    const type = partnerTypeFromDates(rel.type as PartnerKind, endedOn);
+    await updateRelationship(rel.id, {
+      type,
+      metadata: { marriedOn, marriedPlace, endedOn, endedPlace },
+    });
+    setOpen(false);
+  }
+
+  return (
+    <div className="grid gap-2">
+      <button type="button" className="text-left text-xs text-[var(--gold)]" onClick={() => setOpen((value) => !value)}>
+        {open ? "Hide marriage dates" : "Marriage and divorce"}
+      </button>
+      {open ? (
+        <div className="grid gap-2 rounded-2xl border border-[color-mix(in_srgb,var(--ink)_10%,transparent)] p-2">
+          <label className="grid gap-1 text-xs text-[var(--muted)]">
+            Married
+            <input type="date" value={marriedOn} onChange={(e) => setMarriedOn(e.target.value)} className={miniField} />
+          </label>
+          <label className="grid gap-1 text-xs text-[var(--muted)]">
+            Place
+            <input value={marriedPlace} onChange={(e) => setMarriedPlace(e.target.value)} className={miniField} />
+          </label>
+          <label className="grid gap-1 text-xs text-[var(--muted)]">
+            Ended / divorced
+            <input type="date" value={endedOn} onChange={(e) => setEndedOn(e.target.value)} className={miniField} />
+          </label>
+          <label className="grid gap-1 text-xs text-[var(--muted)]">
+            Place ended
+            <input value={endedPlace} onChange={(e) => setEndedPlace(e.target.value)} className={miniField} />
+          </label>
+          <Button type="button" tone="ghost" onClick={() => void save()}>
+            Save partnership
+          </Button>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+const miniField =
+  "w-full rounded-xl border border-[color-mix(in_srgb,var(--ink)_14%,transparent)] bg-[color-mix(in_srgb,var(--sky)_40%,transparent)] px-2 py-1 text-sm text-[var(--ink)] outline-none";
 
 function RelGroup({
   label,
