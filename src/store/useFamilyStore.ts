@@ -113,6 +113,7 @@ interface FamilyState {
   updateInscription: (id: string, patch: Partial<Pick<AtlasInscription, "text" | "x" | "y" | "kind">>) => Promise<void>;
   removeInscription: (id: string) => Promise<void>;
   saveEvents: (events: FamilySnapshot["events"]) => Promise<void>;
+  saveMedia: (media: FamilySnapshot["media"]) => Promise<void>;
   importSnapshot: (snapshot: FamilySnapshot) => Promise<void>;
 }
 
@@ -430,6 +431,11 @@ export const useFamilyStore = create<FamilyState>((set, get) => ({
 
   saveEvents: async (events) => {
     const snap = await getWorkingApi().patchCatalog({ events });
+    set(atlasFields(snap));
+  },
+
+  saveMedia: async (media) => {
+    const snap = await getWorkingApi().patchCatalog({ media });
     set(atlasFields(snap));
   },
 
