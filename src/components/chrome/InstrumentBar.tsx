@@ -68,6 +68,7 @@ export function InstrumentBar() {
           <Tool icon={<Tree size={18} />} label="Expand all" onClick={expandAll} />
           <Tool icon={<SquaresFour size={18} />} label="Collapse all" onClick={collapseAll} />
           <Tool icon={<Funnel size={18} />} label="Filters" onClick={() => setPanel({ type: "filters" })} />
+          <Tool icon={<BookOpen size={18} />} label="Research tools" onClick={() => setPanel({ type: "research" })} />
           <Tool icon={<Crosshair size={18} />} label="Focus mode" onClick={() => setFocusMode(!focusMode)} active={focusMode} />
           <Tool icon={theme === "dark" ? <Sun size={18} /> : <Moon size={18} />} label={theme === "dark" ? "Day chart" : "Night atlas"} onClick={() => setTheme(theme === "dark" ? "light" : "dark")} />
           <Tool icon={<Keyboard size={18} />} label="Shortcuts" onClick={() => setPanel({ type: "shortcuts" })} />

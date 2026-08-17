@@ -25,6 +25,7 @@ import {
   type Relationship,
   type TreeFilters,
 } from "@/domain/types";
+import { findReplacePeople, mergePeople as mergePeopleSnapshot } from "@/domain/quality";
 import { useAccountStore } from "@/store/useAccountStore";
 import { create } from "zustand";
 
@@ -38,6 +39,7 @@ export type Panel =
   | { type: "shortcuts" }
   | { type: "share" }
   | { type: "views" }
+  | { type: "research" }
   | { type: "confirm-delete"; personId: string };
 
 interface FamilyState {
@@ -56,6 +58,7 @@ interface FamilyState {
   audit: FamilySnapshot["audit"];
   recycleBin: FamilySnapshot["recycleBin"];
   members: FamilySnapshot["members"];
+  history: FamilySnapshot[];
   access: AccessMode;
   shareToken: string | null;
   shareMissing: boolean;
@@ -117,6 +120,13 @@ interface FamilyState {
   saveEvents: (events: FamilySnapshot["events"]) => Promise<void>;
   saveMedia: (media: FamilySnapshot["media"]) => Promise<void>;
   importSnapshot: (snapshot: FamilySnapshot) => Promise<void>;
+  undo: () => Promise<void>;
+  mergePeople: (keepId: string, dropId: string) => Promise<void>;
+  findReplace: (field: "lastName" | "location" | "birthPlace" | "deathPlace", from: string, to: string) => Promise<void>;
+  restorePerson: (id: string) => Promise<void>;
+  saveTasks: (tasks: FamilySnapshot["tasks"]) => Promise<void>;
+  saveComments: (comments: FamilySnapshot["comments"]) => Promise<void>;
+  saveSources: (sources: FamilySnapshot["sources"], citations: FamilySnapshot["citations"]) => Promise<void>;
 }
 
 export const useFamilyStore = create<FamilyState>((set, get) => ({
@@ -135,6 +145,7 @@ export const useFamilyStore = create<FamilyState>((set, get) => ({
   audit: [],
   recycleBin: [],
   members: [],
+  history: [],
   access: "owner",
   shareToken: null,
   shareMissing: false,
@@ -169,6 +180,7 @@ export const useFamilyStore = create<FamilyState>((set, get) => ({
       shareToken: null,
       shareMissing: false,
       placingLabel: false,
+      history: [],
     });
   },
 
@@ -311,11 +323,19 @@ export const useFamilyStore = create<FamilyState>((set, get) => ({
   },
 
   removePerson: async (id) => {
+    const prev = get().snapshot();
+    const person = get().people.find((item) => item.id === id);
+    if (!person) return;
+    const related = get().relationships.filter((rel) => rel.sourcePersonId === id || rel.targetPersonId === id);
     await getWorkingApi().deletePerson(id);
-    const snap = await getWorkingApi().load();
+    const loaded = await getWorkingApi().load();
+    const snap = await getWorkingApi().patchCatalog({
+      recycleBin: [{ person, relationships: related, deletedAt: new Date().toISOString() }, ...loaded.recycleBin].slice(0, 50),
+    });
     const next = snap.people[0]?.id ?? null;
     set({
       ...atlasFields(snap),
+      history: [...get().history, prev].slice(-40),
       selectedId: next,
       panel: next ? { type: "profile", personId: next } : { type: "none" },
     });
@@ -447,14 +467,65 @@ export const useFamilyStore = create<FamilyState>((set, get) => ({
   },
 
   importSnapshot: async (snapshot) => {
+    const prev = get().snapshot();
     const snap = await getWorkingApi().replaceSnapshot(normalizeSnapshot(snapshot));
     set({
       ...atlasFields(snap),
+      history: [...get().history, prev].slice(-40),
       selectedId: snap.homePersonId ?? snap.people[0]?.id ?? null,
       collapsedIds: [],
       requestFit: get().requestFit + 1,
       panel: { type: "none" },
     });
+  },
+
+  undo: async () => {
+    const history = get().history;
+    const prev = history[history.length - 1];
+    if (!prev) return;
+    const snap = await getWorkingApi().replaceSnapshot(prev);
+    set({ ...atlasFields(snap), history: history.slice(0, -1) });
+  },
+
+  mergePeople: async (keepId, dropId) => {
+    const prev = get().snapshot();
+    const snap = await getWorkingApi().replaceSnapshot(mergePeopleSnapshot(prev, keepId, dropId));
+    set({ ...atlasFields(snap), history: [...get().history, prev].slice(-40), selectedId: keepId });
+  },
+
+  findReplace: async (field, from, to) => {
+    const prev = get().snapshot();
+    const people = findReplacePeople(prev.people, field, from, to);
+    const snap = await getWorkingApi().replaceSnapshot({ ...prev, people });
+    set({ ...atlasFields(snap), history: [...get().history, prev].slice(-40) });
+  },
+
+  restorePerson: async (id) => {
+    const prev = get().snapshot();
+    const entry = prev.recycleBin.find((item) => item.person.id === id);
+    if (!entry) return;
+    const snap = await getWorkingApi().replaceSnapshot({
+      ...prev,
+      people: [...prev.people, entry.person],
+      relationships: [...prev.relationships, ...entry.relationships],
+      recycleBin: prev.recycleBin.filter((item) => item.person.id !== id),
+    });
+    set({ ...atlasFields(snap), history: [...get().history, prev].slice(-40), selectedId: id });
+  },
+
+  saveTasks: async (tasks) => {
+    const snap = await getWorkingApi().patchCatalog({ tasks });
+    set(atlasFields(snap));
+  },
+
+  saveComments: async (comments) => {
+    const snap = await getWorkingApi().patchCatalog({ comments });
+    set(atlasFields(snap));
+  },
+
+  saveSources: async (sources, citations) => {
+    const snap = await getWorkingApi().patchCatalog({ sources, citations });
+    set(atlasFields(snap));
   },
 }));
 

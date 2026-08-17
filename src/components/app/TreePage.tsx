@@ -1,6 +1,7 @@
 import { ContextMenu } from "@/components/chrome/ContextMenu";
 import { FilterPanel } from "@/components/chrome/FilterPanel";
 import { InstrumentBar } from "@/components/chrome/InstrumentBar";
+import { ResearchPanel } from "@/components/chrome/ResearchPanel";
 import { SearchPalette } from "@/components/chrome/SearchPalette";
 import { SharePanel } from "@/components/chrome/SharePanel";
 import { ViewsPanel } from "@/components/chrome/ViewsPanel";
@@ -45,6 +46,11 @@ export function TreePage() {
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
       const meta = event.metaKey || event.ctrlKey;
+      if (canEdit && meta && event.key.toLowerCase() === "z") {
+        event.preventDefault();
+        void useFamilyStore.getState().undo();
+        return;
+      }
       if (meta && event.key.toLowerCase() === "k") {
         event.preventDefault();
         useFamilyStore.getState().setPanel({ type: "search" });
@@ -106,6 +112,7 @@ export function TreePage() {
   const shortcutsOpen = panel.type === "shortcuts";
   const shareOpen = panel.type === "share";
   const viewsOpen = panel.type === "views";
+  const researchOpen = panel.type === "research";
   const deleting = panel.type === "confirm-delete" ? people.find((person) => person.id === panel.personId) : undefined;
 
   return (
@@ -162,7 +169,7 @@ export function TreePage() {
       </Modal>
       <Modal open={shortcutsOpen} title="Shortcuts" onClose={closePanel}>
         <ul className="grid gap-2 text-sm">
-          <li>⌘/Ctrl + K Search</li>
+          <li>⌘/Ctrl + Z Undo</li>
           <li>N Add person</li>
           <li>T Place a label</li>
           <li>Esc Close</li>
@@ -183,6 +190,12 @@ export function TreePage() {
       </Modal>
       <Sheet open={viewsOpen && mobile} title="Charts and lists" onClose={closePanel}>
         {viewsOpen ? <ViewsPanel /> : null}
+      </Sheet>
+      <Modal open={researchOpen && !mobile} title="Research tools" onClose={closePanel} wide>
+        {researchOpen ? <ResearchPanel /> : null}
+      </Modal>
+      <Sheet open={researchOpen && mobile} title="Research tools" onClose={closePanel}>
+        {researchOpen ? <ResearchPanel /> : null}
       </Sheet>
       <Modal open={Boolean(deleting)} title="Remove this star?" onClose={closePanel}>
         {deleting ? (
