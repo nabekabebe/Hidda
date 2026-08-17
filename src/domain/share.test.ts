@@ -1,5 +1,5 @@
 import { buildGraph } from "./graph";
-import { sliceSnapshot } from "./share";
+import { redactLivingPeople, sliceSnapshot } from "./share";
 import { SEED_PEOPLE, SEED_RELATIONSHIPS } from "./seed";
 import { describe, expect, it } from "vitest";
 
@@ -43,5 +43,14 @@ describe("share snapshot", () => {
     expect(sliced.people[0]?.prefix).toBe("");
     expect(sliced.people[0]?.birthPlace).toBe(sliced.people[0]?.location);
     expect(sliced.events).toEqual([]);
+  });
+
+  it("hides living names on view snapshots", () => {
+    const redacted = sliceSnapshot(snapshot);
+    const living = redacted.people.find((person) => person.id === "mira");
+    expect(living?.firstName).toBe("Mira");
+    const hidden = redactLivingPeople(redacted);
+    expect(hidden.people.find((person) => person.id === "mira")?.firstName).toBe("Living");
+    expect(hidden.people.find((person) => person.id === "ruth")?.firstName).toBe("Ruth");
   });
 });

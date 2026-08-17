@@ -228,6 +228,7 @@ export interface ShareRecord {
   expiresAt?: string;
   passwordHash?: string;
   revoked?: boolean;
+  showLiving?: boolean;
 }
 
 export interface TreeFilters {

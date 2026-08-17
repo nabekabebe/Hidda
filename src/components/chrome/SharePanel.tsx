@@ -19,6 +19,7 @@ export function SharePanel() {
   const selected = people.find((person) => person.id === selectedId);
   const [permission, setPermission] = useState<"view" | "edit">("view");
   const [scope, setScope] = useState<"tree" | "branch">("tree");
+  const [showLiving, setShowLiving] = useState(false);
   const [link, setLink] = useState("");
   const [remote, setRemote] = useState<boolean | null>(null);
   const [busy, setBusy] = useState(false);
@@ -46,6 +47,7 @@ export function SharePanel() {
         scope,
         rootPersonId: scope === "branch" ? selectedId ?? undefined : undefined,
         snapshot: sliced,
+        showLiving,
       });
       const url = `${window.location.origin}${sharePath(result.record.token)}`;
       setLink(url);
@@ -176,6 +178,13 @@ export function SharePanel() {
           </Chip>
         </div>
       </fieldset>
+
+      {permission === "view" ? (
+        <label className="flex items-center gap-2 text-sm">
+          <input type="checkbox" checked={showLiving} onChange={(event) => setShowLiving(event.target.checked)} />
+          Show names and dates for living people
+        </label>
+      ) : null}
 
       {link ? (
         <p className="break-all rounded-2xl bg-[color-mix(in_srgb,var(--sky)_40%,transparent)] px-3 py-2 text-sm text-[var(--ink)]">

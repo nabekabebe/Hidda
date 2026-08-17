@@ -1,4 +1,4 @@
-import { isShareRecord, normalizeSnapshot } from "@/domain/share";
+import { isShareRecord, normalizeSnapshot, snapshotForShare } from "@/domain/share";
 import type { FamilySnapshot, SharePermission, ShareRecord, ShareScope } from "@/domain/types";
 
 const SHARE_KEY = "night-atlas.shares.v1";
@@ -29,7 +29,7 @@ async function readShareResponse(response: Response): Promise<ShareRecord | null
   if (!response.ok || !contentType.includes("json")) return null;
   const body = (await response.json()) as unknown;
   if (!isShareRecord(body)) return null;
-  return { ...body, snapshot: normalizeSnapshot(body.snapshot) };
+  return { ...body, snapshot: snapshotForShare(body.snapshot, body.permission, body.showLiving) };
 }
 
 export async function createShareRecord(input: {
@@ -37,14 +37,16 @@ export async function createShareRecord(input: {
   scope: ShareScope;
   rootPersonId?: string;
   snapshot: FamilySnapshot;
+  showLiving?: boolean;
 }): Promise<{ record: ShareRecord; remote: boolean }> {
   const record: ShareRecord = {
     token: crypto.randomUUID(),
     permission: input.permission,
     scope: input.scope,
     rootPersonId: input.rootPersonId,
-    snapshot: normalizeSnapshot(input.snapshot),
+    snapshot: snapshotForShare(input.snapshot, input.permission, input.showLiving),
     createdAt: new Date().toISOString(),
+    showLiving: Boolean(input.showLiving),
   };
   cacheLocal(record);
 
@@ -69,7 +71,7 @@ export async function loadShareRecord(token: string): Promise<ShareRecord | null
   const id = decodeURIComponent(token).trim();
   const local = readLocal()[id];
   if (local && isShareRecord(local)) {
-    return { ...local, snapshot: normalizeSnapshot(local.snapshot) };
+    return { ...local, snapshot: snapshotForShare(local.snapshot, local.permission, local.showLiving) };
   }
 
   try {

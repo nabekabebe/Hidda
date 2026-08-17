@@ -1,6 +1,7 @@
 import { buildGraph, descendantBranchOf } from "./graph";
 import {
   SNAPSHOT_VERSION,
+  isLiving,
   type AtlasInscription,
   type AuditEvent,
   type Citation,
@@ -151,6 +152,53 @@ export function sliceSnapshot(snapshot: Partial<FamilySnapshot>, rootPersonId?: 
     members: [],
     audit: [],
   };
+}
+
+export function redactLivingPeople(snapshot: FamilySnapshot): FamilySnapshot {
+  const base = normalizeSnapshot(snapshot);
+  return {
+    ...base,
+    people: base.people.map((person) =>
+      isLiving(person)
+        ? {
+            ...person,
+            prefix: "",
+            firstName: "Living",
+            middleName: "",
+            lastName: "",
+            suffix: "",
+            birthLastName: "",
+            nickname: "",
+            avatar: "",
+            birthDate: "",
+            description: "",
+            occupation: "",
+            location: "",
+            birthPlace: "",
+            notes: "",
+            tags: [],
+          }
+        : person,
+    ),
+    events: base.events.filter((event) => {
+      const person = base.people.find((item) => item.id === event.personId);
+      return person ? !isLiving(person) : true;
+    }),
+    stories: base.stories.filter((story) => {
+      const person = base.people.find((item) => item.id === story.personId);
+      return person ? !isLiving(person) : true;
+    }),
+    media: base.media.filter((item) => item.personIds.every((id) => {
+      const person = base.people.find((entry) => entry.id === id);
+      return person ? !isLiving(person) : true;
+    })),
+  };
+}
+
+export function snapshotForShare(snapshot: FamilySnapshot, permission: "view" | "edit", showLiving?: boolean): FamilySnapshot {
+  const base = normalizeSnapshot(snapshot);
+  if (permission === "view" && !showLiving) return redactLivingPeople(base);
+  return base;
 }
 
 export function sharePath(token: string): string {
