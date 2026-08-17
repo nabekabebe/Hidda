@@ -1,7 +1,8 @@
+import { createShareRecord } from "@/api/shareClient";
 import { Button } from "@/components/ui/Button";
 import { displayName } from "@/domain/types";
+import { exportGedcom, importGedcom } from "@/domain/gedcom";
 import { isShareRecord, normalizeSnapshot, sharePath, sliceSnapshot } from "@/domain/share";
-import { createShareRecord } from "@/api/shareClient";
 import { captureSnapshotPng, downloadBlob, downloadDataUrl, fileSlug, pngDataUrlToPdfBlob } from "@/lib/exportAtlas";
 import { useFamilyStore } from "@/store/useFamilyStore";
 import { useState } from "react";
@@ -80,6 +81,29 @@ export function SharePanel() {
       toast.success("Catalog restored");
     } catch {
       toast.error("Could not read that JSON backup.");
+    }
+  }
+
+  function exportGed() {
+    const sliced = scopedSnapshot();
+    if (!sliced) return;
+    const blob = new Blob([exportGedcom(sliced)], { type: "text/plain" });
+    downloadBlob(blob, `${fileSlug(exportName())}.ged`);
+    toast.success("GEDCOM exported");
+  }
+
+  async function importGed(file?: File | null) {
+    if (!file || !canEdit) return;
+    try {
+      const { snapshot: next, skipped } = importGedcom(await file.text());
+      if (next.people.length === 0) {
+        toast.error("No people were found in that GEDCOM.");
+        return;
+      }
+      await importSnapshot(next);
+      toast.success(skipped.length ? `Imported · skipped ${skipped.join(", ")}` : "GEDCOM imported");
+    } catch {
+      toast.error("Could not read that GEDCOM file.");
     }
   }
 
@@ -167,8 +191,17 @@ export function SharePanel() {
             <input type="file" accept="application/json,.json" className="sr-only" onChange={(event) => void importJson(event.target.files?.[0])} />
           </label>
         ) : null}
+        {canEdit ? (
+          <label className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-full border border-[color-mix(in_srgb,var(--ink)_16%,transparent)] px-4 py-2 text-sm">
+            Import GEDCOM
+            <input type="file" accept=".ged,.gedcom,text/plain" className="sr-only" onChange={(event) => void importGed(event.target.files?.[0])} />
+          </label>
+        ) : null}
         <Button tone="ghost" type="button" disabled={busy} onClick={exportJson}>
           Export JSON
+        </Button>
+        <Button tone="ghost" type="button" disabled={busy} onClick={exportGed}>
+          Export GEDCOM
         </Button>
         <Button tone="ghost" type="button" disabled={busy} onClick={() => void exportPng()}>
           Export PNG
