@@ -1,0 +1,46 @@
+{
+  "title": "Choose the Night Atlas composition",
+  "question": "Same world. Three ways the first viewport can work. Lock one; the build must match it.",
+  "options": [
+    {
+      "id": "comp-atlas-canvas",
+      "label": "Open sky",
+      "kicker": "FROM THE ROLL",
+      "lineage": "Night Atlas",
+      "thesis": "The tree is the whole sky. Select a star, add at the compass, read the catalog slip.",
+      "palette": ["#0b1220", "#f4d27a", "#e8eef8", "#7aa2ff"],
+      "materials": ["engraved star disk", "gold catalog ink", "faint graticule"],
+      "viewport": "Full-bleed navy canvas. Portrait-stars on generation bands. Selected Mira Solano with four compass actions. Slim instrument column left, profile slip right.",
+      "risk": "The profile slip can steal the sky if it grows too wide.",
+      "comp": ".impeccable/mocks/comp-atlas-canvas.webp"
+    },
+    {
+      "id": "comp-atlas-focus",
+      "label": "Focus and place",
+      "lineage": "Night Atlas",
+      "thesis": "Adding a person is the first viewport: one constellation isolated, the catalog slip already open.",
+      "palette": ["#0b1220", "#f4d27a", "#e8eef8", "#7aa2ff"],
+      "materials": ["struck star", "ghost magnitude", "catalog slip"],
+      "viewport": "Focus mode. Mira large and haloed. Other relatives dim. Add-person slip on the right. Mini-map of the full sky lower left.",
+      "risk": "Can feel like a form-first app if the slip dominates the constellation.",
+      "comp": ".impeccable/mocks/comp-atlas-focus.webp"
+    },
+    {
+      "id": "comp-atlas-search",
+      "label": "Find then strike",
+      "lineage": "Night Atlas",
+      "thesis": "A dense atlas you search. Jump, highlight, then act.",
+      "palette": ["#0b1220", "#f4d27a", "#e8eef8", "#7aa2ff"],
+      "materials": ["dense constellation", "command glass", "mini-map"],
+      "viewport": "A larger multi-generation sky. Command palette open. Noor Solano struck gold. Filter chips and a circular mini-map.",
+      "risk": "Density plus overlay can hide the compass add actions that make the product work.",
+      "comp": ".impeccable/mocks/comp-atlas-search.webp"
+    }
+  ],
+  "buildPath": {
+    "value": "comp",
+    "toggle": true
+  },
+  "canon": false,
+  "steer": true
+}

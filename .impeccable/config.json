@@ -1,0 +1,33 @@
+{
+  "buildPath": "comp",
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "design-system-font-size",
+        "value": "1.05rem",
+        "createdAt": "2026-08-17T06:47:11.560Z",
+        "reason": "DESIGN.md Title hierarchy: canvas node names use catalog face at 1.05rem"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "color-mix(in srgb, var(--gold) 22%, transparent)",
+        "createdAt": "2026-08-17T06:48:29.695Z",
+        "reason": "DESIGN.md generation graticule: faint gold arcs on the navy field"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "color-mix(in srgb, var(--gold) 55%, transparent)",
+        "createdAt": "2026-08-17T06:48:29.721Z",
+        "reason": "DESIGN.md generation labels and selection wash use gold at 55%"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "color-mix(in srgb, var(--gold) 40%, transparent)",
+        "createdAt": "2026-08-17T06:48:29.747Z",
+        "reason": "DESIGN.md generation RA/Dec ticks at quieter gold"
+      }
+    ]
+  }
+}

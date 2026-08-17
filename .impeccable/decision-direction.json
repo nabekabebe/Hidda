@@ -1,0 +1,155 @@
+{
+  "title": "Choose the visual world",
+  "question": "The roll assigned Night Atlas. Keep it, take an alternate, or re-roll.",
+  "options": [
+    {
+      "id": "assigned",
+      "label": "Night Atlas",
+      "kicker": "THE ROLL",
+      "lineage": "celestial atlases and constellation figures",
+      "thesis": "The family is a night sky: people are catalogued stars, kinship is the constellation you draw between them.",
+      "palette": ["#0b1220", "#f4d27a", "#e8eef8", "#7aa2ff"],
+      "materials": ["engraved star disk", "gold catalog ink", "faint graticule"],
+      "viewport": "A deep navy canvas fills the screen. Portrait-stars sit on generation bands. The selected person is a brighter star with four compass add actions. A glass instrument bar floats at the edge.",
+      "risk": "Can read as a space game if faces and names do not stay the content of every star.",
+      "raised": [
+        {
+          "from": "challenger-cathode",
+          "raise": "Ghost magnitude: filtered or unfocused people stay as faint stars; the selected star is struck brighter, never the only one present."
+        },
+        {
+          "from": "challenger-oscilloscope",
+          "raise": "Declination graticule: generations sit on a measured latitude grid; pan is free until a person is selected, then the view locks on them."
+        },
+        {
+          "from": "challenger-alphabet",
+          "raise": "Name as catalog lettering: the person's name is the constellation inscription, the primary mark on the node, not a caption under a card."
+        },
+        {
+          "from": "challenger-cape",
+          "raise": "Cinch, do not hide: collapsing a branch gathers that constellation into a tighter cluster; the people remain as a compressed figure."
+        },
+        {
+          "from": "challenger-calendar",
+          "raise": "Epoch as magnitude: birth years are catalog numbers on the atlas, readable without opening a profile."
+        }
+      ],
+      "comp": ".impeccable/mocks/decision/assigned.webp"
+    },
+    {
+      "id": "model-pick",
+      "label": "Kinship Transit",
+      "kicker": "IMPECCABLE’S PICK",
+      "lineage": "Beck-style transit diagrams",
+      "thesis": "Family as a transit map: people are stations, generations are lines, relationship types are route colors.",
+      "palette": ["#111318", "#f2c14e", "#3d9ad1", "#f4f1ea"],
+      "materials": ["enamel station disk", "colored route stroke", "legend plate"],
+      "viewport": "A dark map with colored kinship routes. The selected station grows four add stops at the compass. A compact legend names parent, child, spouse, sibling.",
+      "risk": "This is the direction most runs in this category land on: a clean information-design tree that already looks like a product.",
+      "comp": ".impeccable/mocks/decision/model-pick.webp"
+    },
+    {
+      "id": "challenger-terminal-yellow",
+      "label": "Concourse Kin",
+      "verdict": "competitive",
+      "lineage": "airport terminal wayfinding",
+      "thesis": "Finding family is a signed decision: yellow bands, one next step, monumental names.",
+      "palette": ["#f5c400", "#111111", "#ffffff", "#1a1a1a"],
+      "materials": ["saturated yellow panel", "black humanist sans", "pictogram inset"],
+      "viewport": "Yellow overhead bands name the selected person and the four directions you can add. The tree hangs below as a concourse of portrait gates.",
+      "case": "Holds audience identification: the job is finding someone and choosing the next turn. Loses product clarity: sign bands are not a living multi-generation map.",
+      "risk": "The tree can collapse into a corridor of signs and lose who-belongs-to-whom at a glance.",
+      "comp": ".impeccable/mocks/decision/challenger-terminal-yellow.webp",
+      "hero": "https://impeccable.style/worlds/cards/wayfinding-cartography-signage-terminal-yellow-wayfinding-hero.webp",
+      "board": "https://impeccable.style/worlds/cards/wayfinding-cartography-signage-terminal-yellow-wayfinding.webp"
+    },
+    {
+      "id": "challenger-cathode",
+      "label": "Struck Gauze",
+      "verdict": "declined",
+      "lineage": "cathode numeral stacks",
+      "thesis": "Every relative present as a dark ghost; one name struck forward in orange.",
+      "palette": ["#070b14", "#ff6a1a", "#c4a574", "#e8e4d8"],
+      "materials": ["bronze anode gauze", "cathode orange glow"],
+      "viewport": "A mesh plane of faint names; the selected person burns through.",
+      "case": "Loses both axes: family historians do not identify with vacuum tubes, and a numeral stack cannot show kinship hierarchy.",
+      "kept": "Ghost magnitude: unfocused people stay present and dim.",
+      "risk": "Reads as an access-control instrument, not a family map.",
+      "hero": "https://impeccable.style/worlds/cards/operate-b-struck-cathode-gauze-hero.webp"
+    },
+    {
+      "id": "challenger-oscilloscope",
+      "label": "Signal Bench",
+      "verdict": "declined",
+      "lineage": "CRT oscilloscope graticules",
+      "thesis": "Kinship as a locked phosphor trace on a ten-division grid.",
+      "palette": ["#0a0d0a", "#39ff6a", "#6b736b", "#f0b429"],
+      "materials": ["phosphor glass", "etched graticule"],
+      "viewport": "A green trace of generations over a measured grid.",
+      "case": "Loses both axes: a family is not a waveform, and traces do not read as people.",
+      "kept": "Declination graticule: generations measured, selection locks the view.",
+      "risk": "People disappear into instrumentation.",
+      "hero": "https://impeccable.style/worlds/cards/scientific-notation-oscilloscope-signal-bench-hero.webp"
+    },
+    {
+      "id": "challenger-alphabet",
+      "label": "Name Weather",
+      "verdict": "declined",
+      "lineage": "alphabet-storm letter landscapes",
+      "thesis": "Names condense into the landscape the family occupies.",
+      "palette": ["#f4f1ea", "#111111", "#c0c6ce", "#d7dde4"],
+      "materials": ["monumental grotesk", "letter weather"],
+      "viewport": "A field of letters gathering into a selected name.",
+      "case": "Loses both axes: weather-type hides who belongs to whom.",
+      "kept": "Name as catalog lettering: the name is the node's primary mark.",
+      "risk": "Beautiful and unusable as a relationship graph.",
+      "hero": "https://impeccable.style/worlds/cards/dream-surreal-impossible-worlds-alphabet-storm-hero.webp"
+    },
+    {
+      "id": "challenger-cape",
+      "label": "Gathered Cape",
+      "verdict": "declined",
+      "lineage": "drawcord transforming silk cape",
+      "thesis": "A branch is cloth: one pull gathers a generation into a tighter volume.",
+      "palette": ["#0d0d0d", "#d4af37", "#3a3a3a", "#8a8a8a"],
+      "materials": ["matte silk", "gold drawcord"],
+      "viewport": "A black field cinched around the selected person.",
+      "case": "Loses both axes: fashion grammar does not identify as family, and cloth hides the graph.",
+      "kept": "Cinch, do not hide: collapse gathers a cluster instead of deleting it.",
+      "risk": "Collapse becomes costume.",
+      "hero": "https://impeccable.style/worlds/cards/textiles-weave-drape-fashion-drawcord-transforming-cape-hero.webp"
+    },
+    {
+      "id": "challenger-calendar",
+      "label": "Merchant Calendar",
+      "verdict": "declined",
+      "lineage": "advertising wall calendars",
+      "thesis": "A painted plate above a tear-off date pad of births and deaths.",
+      "palette": ["#c43b2e", "#f3e6d0", "#d4af37", "#2a2118"],
+      "materials": ["painted plate", "gold merchant rule"],
+      "viewport": "A portrait plate over a date grid.",
+      "case": "Dropped from the full hand on product-truth grounds: pinup-calendar grammar is wrong for a family product that includes children. Also loses both axes as a relationship map.",
+      "kept": "Epoch as magnitude: dates stay visible on the atlas.",
+      "risk": "Inappropriate carrier for a family tree.",
+      "hero": "https://impeccable.style/worlds/cards/vernacular-ephemera-calendar-pinup-pad-hero.webp"
+    }
+  ],
+  "reroll": {
+    "registers": ["safer", "bolder"]
+  },
+  "buildPath": {
+    "value": "comp",
+    "toggle": true
+  },
+  "canon": true,
+  "canonCard": {
+    "label": "The category standard",
+    "thesis": "A polished genealogy canvas: soft person cards, clean connectors, floating product chrome. Notion plus Linear plus Ancestry, played straight.",
+    "palette": ["#f7f5f2", "#1f1d1a", "#3b6d4a", "#ffffff"],
+    "materials": ["soft card", "hairline connector", "glass toolbar"],
+    "viewport": "A cream workspace with a top-to-bottom tree of rounded portrait cards and a search bar.",
+    "risk": "Indistinguishable from every modern family-tree product by design.",
+    "comp": ".impeccable/mocks/decision/canon.webp"
+  },
+  "steer": true
+}
