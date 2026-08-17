@@ -149,3 +149,10 @@ export const SEED_RELATIONSHIPS: Relationship[] = [
 ];
 
 export const SEED_FOCUS_ID = "mira";
+
+export const SEED_EVENTS = [
+  { id: "e-ruth-birth", type: "birth" as const, personId: "ruth", date: "1921-04-08", place: "Kingston", detail: "" },
+  { id: "e-tomas-ruth", type: "marriage" as const, personId: "tomas", spousePersonId: "ruth", relationshipId: "r5", date: "1946-06-12", place: "Kingston", detail: "" },
+  { id: "e-mira-birth", type: "birth" as const, personId: "mira", date: "1952-02-21", place: "Kingston", detail: "" },
+  { id: "e-mira-daniel", type: "marriage" as const, personId: "mira", spousePersonId: "daniel", relationshipId: "r7", date: "1978-09-03", place: "Brooklyn", detail: "" },
+];

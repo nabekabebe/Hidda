@@ -1,5 +1,5 @@
 import { HttpFamilyApi } from "@/api/httpFamilyApi";
-import { SEED_PEOPLE, SEED_RELATIONSHIPS } from "@/domain/seed";
+import { SEED_EVENTS, SEED_PEOPLE, SEED_RELATIONSHIPS } from "@/domain/seed";
 import { DEFAULT_ATLAS_NAME, emptyCatalog, emptyInscriptions, normalizeSnapshot } from "@/domain/share";
 import {
   personFromDraft,
@@ -33,6 +33,7 @@ export interface FamilyApi {
   clearAll(): Promise<FamilySnapshot>;
   updateAtlas(patch: Partial<Pick<FamilySnapshot, "name" | "inscriptions" | "homePersonId">>): Promise<FamilySnapshot>;
   replaceSnapshot(snapshot: FamilySnapshot): Promise<FamilySnapshot>;
+  patchCatalog(patch: Partial<FamilySnapshot>): Promise<FamilySnapshot>;
 }
 
 function uid(): string {
@@ -115,6 +116,7 @@ export class MemoryFamilyApi implements FamilyApi {
         name: "Solano family",
         inscriptions: [{ id: "title-solano", text: "Solano family", x: 280, y: -56, kind: "title" }],
         homePersonId: "mira",
+        events: SEED_EVENTS,
       }),
       true,
     );
@@ -254,6 +256,12 @@ export class MemoryFamilyApi implements FamilyApi {
   async replaceSnapshot(snapshot: FamilySnapshot): Promise<FamilySnapshot> {
     this.guardWrite();
     this.applySnapshot(snapshot, true);
+    return this.snapshot();
+  }
+
+  async patchCatalog(patch: Partial<FamilySnapshot>): Promise<FamilySnapshot> {
+    this.guardWrite();
+    this.applySnapshot({ ...this.snapshot(), ...patch }, true);
     return this.snapshot();
   }
 }

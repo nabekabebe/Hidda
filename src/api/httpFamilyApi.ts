@@ -74,4 +74,8 @@ export class HttpFamilyApi implements FamilyApi {
   replaceSnapshot(snapshot: FamilySnapshot): Promise<FamilySnapshot> {
     return request("/api/family", { method: "POST", body: JSON.stringify({ op: "replaceSnapshot", snapshot }) });
   }
+
+  patchCatalog(patch: Partial<FamilySnapshot>): Promise<FamilySnapshot> {
+    return request("/api/family", { method: "POST", body: JSON.stringify({ op: "patchCatalog", patch }) });
+  }
 }

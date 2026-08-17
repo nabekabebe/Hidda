@@ -1,5 +1,5 @@
 import { DEFAULT_ATLAS_NAME, emptyInscriptions, normalizeSnapshot } from "../src/domain/share.js";
-import { SEED_PEOPLE, SEED_RELATIONSHIPS } from "../src/domain/seed.js";
+import { SEED_EVENTS, SEED_PEOPLE, SEED_RELATIONSHIPS } from "../src/domain/seed.js";
 import {
   personFromDraft,
   type AtlasInscription,
@@ -212,6 +212,11 @@ export async function updateAtlas(
   return loadSnapshot(sql);
 }
 
+export async function patchCatalog(sql: Sql, patch: Partial<FamilySnapshot>): Promise<FamilySnapshot> {
+  const current = await loadSnapshot(sql);
+  return replaceSnapshot(sql, { ...current, ...patch });
+}
+
 export async function replaceSnapshot(sql: Sql, snapshot: FamilySnapshot): Promise<FamilySnapshot> {
   const next = normalizeSnapshot(snapshot);
   await sql`DELETE FROM relationships`;
@@ -336,8 +341,9 @@ export async function resetToSeed(sql: Sql): Promise<FamilySnapshot> {
   await updateAtlas(sql, {
     name: "Solano family",
     inscriptions: [{ id: "title-solano", text: "Solano family", x: 280, y: -56, kind: "title" }],
+    homePersonId: "mira",
   });
-  return loadSnapshot(sql);
+  return patchCatalog(sql, { events: SEED_EVENTS, homePersonId: "mira" });
 }
 
 export async function clearAll(sql: Sql): Promise<FamilySnapshot> {

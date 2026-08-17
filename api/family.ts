@@ -8,6 +8,7 @@ import {
   deleteRelationship,
   loadSnapshot,
   resetToSeed,
+  patchCatalog,
   replaceSnapshot,
   updateAtlas,
   updatePerson,
@@ -26,7 +27,8 @@ type FamilyOp =
   | { op: "resetToSeed" }
   | { op: "clearAll" }
   | { op: "updateAtlas"; patch: { name?: string; inscriptions?: AtlasInscription[]; homePersonId?: string | null } }
-  | { op: "replaceSnapshot"; snapshot: FamilySnapshot };
+  | { op: "replaceSnapshot"; snapshot: FamilySnapshot }
+  | { op: "patchCatalog"; patch: Partial<FamilySnapshot> };
 
 function unconfigured(res: ApiResponse) {
   res.status(503).json({
@@ -96,6 +98,9 @@ export default async function handler(req: ApiRequest, res: ApiResponse) {
         return;
       case "replaceSnapshot":
         res.status(200).json(await replaceSnapshot(sql, body.snapshot));
+        return;
+      case "patchCatalog":
+        res.status(200).json(await patchCatalog(sql, body.patch));
         return;
       default:
         res.status(400).json({ error: "Unknown op" });
