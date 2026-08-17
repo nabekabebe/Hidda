@@ -1,4 +1,4 @@
-import { createShareRecord } from "@/api/shareClient";
+import { createShareRecord, listLocalShares, revokeLocalShare } from "@/api/shareClient";
 import { Button } from "@/components/ui/Button";
 import { displayName } from "@/domain/types";
 import { exportGedcom, importGedcom } from "@/domain/gedcom";
@@ -15,11 +15,18 @@ export function SharePanel() {
   const atlasName = useFamilyStore((s) => s.atlasName);
   const setAtlasName = useFamilyStore((s) => s.setAtlasName);
   const importSnapshot = useFamilyStore((s) => s.importSnapshot);
+  const members = useFamilyStore((s) => s.members);
+  const saveMembers = useFamilyStore((s) => s.saveMembers);
   const canEdit = useFamilyStore((s) => s.access !== "view");
   const selected = people.find((person) => person.id === selectedId);
   const [permission, setPermission] = useState<"view" | "edit">("view");
   const [scope, setScope] = useState<"tree" | "branch">("tree");
   const [showLiving, setShowLiving] = useState(false);
+  const [expires, setExpires] = useState<"never" | "7" | "30">("never");
+  const [password, setPassword] = useState("");
+  const [inviteEmail, setInviteEmail] = useState("");
+  const [inviteRole, setInviteRole] = useState<"view" | "edit">("view");
+  const [shares, setShares] = useState(() => listLocalShares());
   const [link, setLink] = useState("");
   const [remote, setRemote] = useState<boolean | null>(null);
   const [busy, setBusy] = useState(false);
@@ -48,10 +55,13 @@ export function SharePanel() {
         rootPersonId: scope === "branch" ? selectedId ?? undefined : undefined,
         snapshot: sliced,
         showLiving,
+        password: password || undefined,
+        expiresAt: expires === "never" ? undefined : new Date(Date.now() + Number(expires) * 86400000).toISOString(),
       });
       const url = `${window.location.origin}${sharePath(result.record.token)}`;
       setLink(url);
       setRemote(result.remote);
+      setShares(listLocalShares());
       await navigator.clipboard.writeText(url);
       toast.success(result.remote ? "Link copied" : "Link copied · works in this browser until a database is linked");
     } catch {
@@ -186,11 +196,90 @@ export function SharePanel() {
         </label>
       ) : null}
 
+      <div className="grid gap-2 md:grid-cols-2">
+        <label className="grid gap-1 text-sm text-[var(--muted)]">
+          Link expires
+          <select value={expires} onChange={(event) => setExpires(event.target.value as typeof expires)} className="rounded-2xl border border-[color-mix(in_srgb,var(--ink)_14%,transparent)] bg-transparent px-3 py-2 text-[var(--ink)]">
+            <option value="never">Never</option>
+            <option value="7">In 7 days</option>
+            <option value="30">In 30 days</option>
+          </select>
+        </label>
+        <label className="grid gap-1 text-sm text-[var(--muted)]">
+          Optional password
+          <input type="password" value={password} onChange={(event) => setPassword(event.target.value)} className="rounded-2xl border border-[color-mix(in_srgb,var(--ink)_14%,transparent)] bg-transparent px-3 py-2 text-[var(--ink)]" />
+        </label>
+      </div>
+
       {link ? (
         <p className="break-all rounded-2xl bg-[color-mix(in_srgb,var(--sky)_40%,transparent)] px-3 py-2 text-sm text-[var(--ink)]">
           {link}
           {remote === false ? <span className="mt-1 block text-xs text-[var(--muted)]">Works on this device until a database is linked.</span> : null}
         </p>
+      ) : null}
+
+      {canEdit ? (
+        <section className="grid gap-2">
+          <p className="catalog text-[11px] uppercase tracking-[0.18em] text-[var(--gold)]">Invite to this atlas</p>
+          <div className="flex flex-wrap gap-2">
+            <input value={inviteEmail} onChange={(event) => setInviteEmail(event.target.value)} placeholder="Email" className="min-w-40 flex-1 rounded-2xl border border-[color-mix(in_srgb,var(--ink)_14%,transparent)] bg-transparent px-3 py-2 text-sm outline-none" />
+            <select value={inviteRole} onChange={(event) => setInviteRole(event.target.value as "view" | "edit")} className="rounded-2xl border border-[color-mix(in_srgb,var(--ink)_14%,transparent)] bg-transparent px-3 py-2 text-sm">
+              <option value="view">View</option>
+              <option value="edit">Edit</option>
+            </select>
+            <Button
+              type="button"
+              onClick={() => {
+                if (!inviteEmail.trim()) return;
+                void saveMembers([
+                  ...members,
+                  { id: crypto.randomUUID(), email: inviteEmail.trim(), name: inviteEmail.trim(), role: inviteRole, invitedAt: new Date().toISOString() },
+                ]).then(() => {
+                  setInviteEmail("");
+                  toast.success("Invite saved on this atlas");
+                });
+              }}
+            >
+              Invite
+            </Button>
+          </div>
+          <ul className="grid gap-1 text-sm">
+            {members.map((member) => (
+              <li key={member.id} className="flex justify-between gap-2">
+                <span>{member.email} · {member.role}</span>
+                <button type="button" className="text-[var(--muted)]" onClick={() => void saveMembers(members.filter((item) => item.id !== member.id))}>
+                  Remove
+                </button>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
+
+      {shares.length ? (
+        <section className="grid gap-2">
+          <p className="catalog text-[11px] uppercase tracking-[0.18em] text-[var(--gold)]">Links from this browser</p>
+          <ul className="grid gap-2 text-sm">
+            {shares.slice(0, 6).map((share) => (
+              <li key={share.token} className="flex items-center justify-between gap-2">
+                <span className="truncate">{share.permission} · {share.revoked ? "revoked" : share.expiresAt ? `until ${share.expiresAt.slice(0, 10)}` : "open"}</span>
+                {!share.revoked ? (
+                  <button
+                    type="button"
+                    className="text-[var(--muted)]"
+                    onClick={() => {
+                      revokeLocalShare(share.token);
+                      setShares(listLocalShares());
+                      toast.success("Link revoked");
+                    }}
+                  >
+                    Revoke
+                  </button>
+                ) : null}
+              </li>
+            ))}
+          </ul>
+        </section>
       ) : null}
 
       <div className="flex flex-wrap justify-end gap-2">

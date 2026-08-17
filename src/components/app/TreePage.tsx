@@ -25,6 +25,9 @@ export function TreePage() {
   const atlasName = useFamilyStore((s) => s.atlasName);
   const access = useFamilyStore((s) => s.access);
   const shareMissing = useFamilyStore((s) => s.shareMissing);
+  const shareLocked = useFamilyStore((s) => s.shareLocked);
+  const shareToken = useFamilyStore((s) => s.shareToken);
+  const unlockShare = useFamilyStore((s) => s.unlockShare);
   const placingLabel = useFamilyStore((s) => s.placingLabel);
   const setPlacingLabel = useFamilyStore((s) => s.setPlacingLabel);
   const canEdit = useFamilyStore((s) => s.access !== "view");
@@ -87,6 +90,10 @@ export function TreePage() {
 
   if (!ready) {
     return <div className="grid h-full place-items-center text-[var(--muted)]">Charting the sky…</div>;
+  }
+
+  if (shareLocked) {
+    return <ShareLock token={shareToken} onUnlock={unlockShare} />;
   }
 
   if (shareMissing) {
@@ -236,6 +243,31 @@ function DeleteCopy({
         <Button tone="ghost" onClick={onCancel}>Keep</Button>
         <Button tone="danger" onClick={onConfirm}>Delete</Button>
       </div>
+    </div>
+  );
+}
+
+function ShareLock({ token, onUnlock }: { token: string | null; onUnlock: (token: string, password: string) => Promise<boolean> }) {
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  return (
+    <div className="flex h-full flex-col items-center justify-center px-6 text-center">
+      <p className="catalog text-4xl text-[var(--bone)]">This sky is locked</p>
+      <p className="mt-4 max-w-[36ch] text-[var(--muted)]">Enter the password that came with the link.</p>
+      <form
+        className="mt-8 grid w-full max-w-sm gap-3"
+        onSubmit={(event) => {
+          event.preventDefault();
+          if (!token) return;
+          void onUnlock(token, password).then((ok) => {
+            if (!ok) setError("That password does not open this atlas.");
+          });
+        }}
+      >
+        <input type="password" value={password} onChange={(event) => setPassword(event.target.value)} className="rounded-2xl border border-[color-mix(in_srgb,var(--ink)_14%,transparent)] bg-transparent px-3 py-2 outline-none" />
+        {error ? <p className="text-sm text-[var(--danger)]">{error}</p> : null}
+        <Button type="submit">Open</Button>
+      </form>
     </div>
   );
 }

@@ -1,5 +1,5 @@
 import { getWorkingApi, MemoryFamilyApi, openOwnerApi, setWorkingApi } from "@/api/familyApi";
-import { loadShareRecord, saveShareSnapshot } from "@/api/shareClient";
+import { loadShareRecord, saveShareSnapshot, verifySharePassword } from "@/api/shareClient";
 import {
   alreadyRelated,
   buildGraph,
@@ -62,6 +62,7 @@ interface FamilyState {
   access: AccessMode;
   shareToken: string | null;
   shareMissing: boolean;
+  shareLocked: boolean;
   placingLabel: boolean;
   selectedInscriptionId: string | null;
   ready: boolean;
@@ -79,6 +80,7 @@ interface FamilyState {
   requestCenterId: string | null;
   hydrate: () => Promise<void>;
   hydrateShare: (token: string) => Promise<boolean>;
+  unlockShare: (token: string, password: string) => Promise<boolean>;
   snapshot: () => FamilySnapshot;
   canEdit: () => boolean;
   graph: () => FamilyGraph;
@@ -126,6 +128,7 @@ interface FamilyState {
   restorePerson: (id: string) => Promise<void>;
   saveTasks: (tasks: FamilySnapshot["tasks"]) => Promise<void>;
   saveComments: (comments: FamilySnapshot["comments"]) => Promise<void>;
+  saveMembers: (members: FamilySnapshot["members"]) => Promise<void>;
   saveSources: (sources: FamilySnapshot["sources"], citations: FamilySnapshot["citations"]) => Promise<void>;
 }
 
@@ -149,6 +152,7 @@ export const useFamilyStore = create<FamilyState>((set, get) => ({
   access: "owner",
   shareToken: null,
   shareMissing: false,
+  shareLocked: false,
   placingLabel: false,
   selectedInscriptionId: null,
   ready: false,
@@ -191,6 +195,18 @@ export const useFamilyStore = create<FamilyState>((set, get) => ({
         ...atlasFields(normalizeSnapshot({})),
         ready: true,
         shareMissing: true,
+        shareLocked: false,
+        access: "view",
+        shareToken: token,
+      });
+      return false;
+    }
+    if (record.passwordHash && sessionStorage.getItem(`night-atlas.share-unlock.${token}`) !== "1") {
+      set({
+        ...atlasFields(normalizeSnapshot({})),
+        ready: true,
+        shareMissing: false,
+        shareLocked: true,
         access: "view",
         shareToken: token,
       });
@@ -212,10 +228,18 @@ export const useFamilyStore = create<FamilyState>((set, get) => ({
       access: record.permission,
       shareToken: token,
       shareMissing: false,
+      shareLocked: false,
       placingLabel: false,
       panel: { type: "none" },
     });
     return true;
+  },
+
+  unlockShare: async (token, password) => {
+    const record = await loadShareRecord(token);
+    if (!record || !(await verifySharePassword(record, password))) return false;
+    sessionStorage.setItem(`night-atlas.share-unlock.${token}`, "1");
+    return get().hydrateShare(token);
   },
 
   snapshot: () => ({
@@ -520,6 +544,11 @@ export const useFamilyStore = create<FamilyState>((set, get) => ({
 
   saveComments: async (comments) => {
     const snap = await getWorkingApi().patchCatalog({ comments });
+    set(atlasFields(snap));
+  },
+
+  saveMembers: async (members) => {
+    const snap = await getWorkingApi().patchCatalog({ members });
     set(atlasFields(snap));
   },
 

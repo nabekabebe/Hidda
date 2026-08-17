@@ -38,7 +38,11 @@ export async function createShareRecord(input: {
   rootPersonId?: string;
   snapshot: FamilySnapshot;
   showLiving?: boolean;
+  expiresAt?: string;
+  password?: string;
 }): Promise<{ record: ShareRecord; remote: boolean }> {
+  const passwordHash = input.password ? (await import("@/lib/password")).hashPassword(input.password).then((item) => `${item.salt}:${item.hash}`) : undefined;
+  const hashed = passwordHash ? await passwordHash : undefined;
   const record: ShareRecord = {
     token: crypto.randomUUID(),
     permission: input.permission,
@@ -47,6 +51,8 @@ export async function createShareRecord(input: {
     snapshot: snapshotForShare(input.snapshot, input.permission, input.showLiving),
     createdAt: new Date().toISOString(),
     showLiving: Boolean(input.showLiving),
+    expiresAt: input.expiresAt,
+    passwordHash: hashed,
   };
   cacheLocal(record);
 
@@ -70,14 +76,15 @@ export async function createShareRecord(input: {
 export async function loadShareRecord(token: string): Promise<ShareRecord | null> {
   const id = decodeURIComponent(token).trim();
   const local = readLocal()[id];
-  if (local && isShareRecord(local)) {
-    return { ...local, snapshot: snapshotForShare(local.snapshot, local.permission, local.showLiving) };
-  }
+  const record = local && isShareRecord(local)
+    ? { ...local, snapshot: snapshotForShare(local.snapshot, local.permission, local.showLiving) }
+    : null;
+  if (record && shareUsable(record)) return record;
 
   try {
     const response = await fetch(`/api/share/${encodeURIComponent(id)}`);
     const saved = await readShareResponse(response);
-    if (saved) {
+    if (saved && shareUsable(saved)) {
       cacheLocal(saved);
       return saved;
     }
@@ -85,6 +92,31 @@ export async function loadShareRecord(token: string): Promise<ShareRecord | null
     /* fall through */
   }
   return null;
+}
+
+export function shareUsable(record: ShareRecord): boolean {
+  if (record.revoked) return false;
+  if (record.expiresAt && new Date(record.expiresAt).getTime() < Date.now()) return false;
+  return true;
+}
+
+export function listLocalShares(): ShareRecord[] {
+  return Object.values(readLocal()).sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+}
+
+export function revokeLocalShare(token: string) {
+  const local = readLocal();
+  if (!local[token]) return;
+  local[token] = { ...local[token], revoked: true };
+  writeLocal(local);
+}
+
+export async function verifySharePassword(record: ShareRecord, password: string): Promise<boolean> {
+  if (!record.passwordHash) return true;
+  const [salt, hash] = record.passwordHash.split(":");
+  if (!salt || !hash) return false;
+  const { verifyPassword } = await import("@/lib/password");
+  return verifyPassword(password, salt, hash);
 }
 
 export async function saveShareSnapshot(token: string, snapshot: FamilySnapshot): Promise<void> {

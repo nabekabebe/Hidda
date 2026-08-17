@@ -59,6 +59,7 @@ export function ProfileSlip({ person }: { person: Person }) {
       </dl>
       <EventList personId={person.id} />
       <PersonGallery personId={person.id} />
+      <PersonComments personId={person.id} />
       <RelGroup label="Parents" people={parents} onOpen={openProfile} />
       <PartnershipGroup personId={person.id} edges={partners} onOpen={openProfile} canEdit={canEdit} />
       <RelGroup label="Siblings" people={siblings} onOpen={openProfile} />
@@ -214,6 +215,41 @@ function RelGroup({
           </li>
         ))}
       </ul>
+    </section>
+  );
+}
+
+function PersonComments({ personId }: { personId: string }) {
+  const comments = useFamilyStore((s) => s.comments.filter((item) => item.personId === personId));
+  const saveComments = useFamilyStore((s) => s.saveComments);
+  const all = useFamilyStore((s) => s.comments);
+  const [body, setBody] = useState("");
+  return (
+    <section>
+      <h3 className="catalog mb-2 text-[11px] uppercase tracking-[0.18em] text-[var(--gold)]">Comments</h3>
+      <ul className="grid gap-2 text-sm">
+        {comments.map((item) => (
+          <li key={item.id}>
+            <p className="text-[var(--muted)]">{item.authorName}</p>
+            <p>{item.body}</p>
+          </li>
+        ))}
+      </ul>
+      <form
+        className="mt-2 grid gap-2"
+        onSubmit={(event) => {
+          event.preventDefault();
+          if (!body.trim()) return;
+          void saveComments([
+            ...all,
+            { id: crypto.randomUUID(), personId, authorName: "Guest", body: body.trim(), createdAt: new Date().toISOString() },
+          ]);
+          setBody("");
+        }}
+      >
+        <textarea value={body} onChange={(event) => setBody(event.target.value)} className={miniField} rows={2} placeholder="Leave a note for the family" />
+        <Button type="submit" tone="ghost">Post</Button>
+      </form>
     </section>
   );
 }
