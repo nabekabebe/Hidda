@@ -1,0 +1,17 @@
+{
+  "name": "Hidda Night Atlas",
+  "short_name": "Hidda",
+  "description": "A private family atlas you navigate like a night sky.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0b131b",
+  "theme_color": "#0b131b",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
