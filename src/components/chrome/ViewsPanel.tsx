@@ -4,19 +4,22 @@ import { generationIndex } from "@/domain/graph";
 import { eventsForPerson, eventLabel } from "@/domain/events";
 import { isDisconnected, relationToHome } from "@/domain/kin";
 import { fanPeople, pedigreeSlots } from "@/domain/pedigree";
+import { familyGroupSheet, narrativeReport, peopleCsv, uniquePlaces } from "@/domain/reports";
+import { downloadBlob, fileSlug } from "@/lib/exportAtlas";
 import { catalogYear, displayName, type Person } from "@/domain/types";
 import { cn } from "@/lib/cn";
 import { useFamilyStore } from "@/store/useFamilyStore";
 import { useMemo, useState } from "react";
+import { toast } from "sonner";
 
-type Tab = "index" | "pedigree" | "fan" | "timeline";
+type Tab = "index" | "pedigree" | "fan" | "timeline" | "reports" | "map";
 
 export function ViewsPanel() {
   const [tab, setTab] = useState<Tab>("index");
   return (
     <div className="grid gap-4">
       <div className="flex flex-wrap gap-2">
-        {(["index", "pedigree", "fan", "timeline"] as const).map((item) => (
+        {(["index", "pedigree", "fan", "timeline", "reports", "map"] as const).map((item) => (
           <button
             key={item}
             type="button"
@@ -35,6 +38,8 @@ export function ViewsPanel() {
       {tab === "pedigree" ? <PedigreeView /> : null}
       {tab === "fan" ? <FanView /> : null}
       {tab === "timeline" ? <TimelineView /> : null}
+      {tab === "reports" ? <ReportsView /> : null}
+      {tab === "map" ? <MapView /> : null}
     </div>
   );
 }
@@ -228,6 +233,82 @@ function TimelineView() {
         </li>
       ))}
     </ol>
+  );
+}
+
+function ReportsView() {
+  const snapshot = useFamilyStore((s) => s.snapshot);
+  const selectedId = useFamilyStore((s) => s.selectedId);
+  const homePersonId = useFamilyStore((s) => s.homePersonId);
+  const people = useFamilyStore((s) => s.people);
+  const atlasName = useFamilyStore((s) => s.atlasName);
+  const rootId = selectedId || homePersonId || people[0]?.id;
+  if (!rootId) return <p className="text-sm text-[var(--muted)]">Place a person first.</p>;
+  const sheet = familyGroupSheet(snapshot(), rootId);
+  const story = narrativeReport(snapshot(), rootId);
+  return (
+    <div className="grid gap-3">
+      <div className="flex flex-wrap gap-2">
+        <Button
+          type="button"
+          tone="ghost"
+          onClick={() => {
+            downloadBlob(new Blob([peopleCsv(snapshot())], { type: "text/csv" }), `${fileSlug(atlasName)}.csv`);
+            toast.success("CSV exported");
+          }}
+        >
+          Export CSV
+        </Button>
+        <Button
+          type="button"
+          tone="ghost"
+          onClick={() => {
+            downloadBlob(new Blob([sheet], { type: "text/plain" }), `${fileSlug(atlasName)}-group.txt`);
+            toast.success("Group sheet exported");
+          }}
+        >
+          Family group sheet
+        </Button>
+        <Button
+          type="button"
+          tone="ghost"
+          onClick={() => {
+            downloadBlob(new Blob([story], { type: "text/plain" }), `${fileSlug(atlasName)}-narrative.txt`);
+            toast.success("Narrative exported");
+          }}
+        >
+          Narrative
+        </Button>
+      </div>
+      <pre className="atlas-scroll max-h-[36dvh] overflow-auto whitespace-pre-wrap text-sm text-[var(--ink)]">{sheet}</pre>
+      <p className="font-bio text-sm leading-relaxed">{story}</p>
+    </div>
+  );
+}
+
+function MapView() {
+  const snapshot = useFamilyStore((s) => s.snapshot);
+  const centerOn = useFamilyStore((s) => s.centerOn);
+  const places = uniquePlaces(snapshot());
+  if (!places.length) return <p className="text-sm text-[var(--muted)]">Add birthplaces and event places to see them here.</p>;
+  return (
+    <ul className="grid max-h-[52dvh] gap-2 overflow-auto">
+      {places.map((place) => (
+        <li key={`${place.personId}-${place.label}`} className="flex items-center justify-between gap-2 text-sm">
+          <button type="button" className="text-left" onClick={() => centerOn(place.personId)}>
+            {place.label}
+          </button>
+          <a
+            className="text-[var(--gold)]"
+            href={`https://www.openstreetmap.org/search?query=${encodeURIComponent(place.label)}`}
+            target="_blank"
+            rel="noreferrer"
+          >
+            Map
+          </a>
+        </li>
+      ))}
+    </ul>
   );
 }
 
