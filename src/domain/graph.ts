@@ -7,7 +7,7 @@ import {
   type Person,
   type Relationship,
   type RelationshipKind,
-} from "./types";
+} from "./types.js";
 
 export interface FamilyGraph {
   people: Map<string, Person>;

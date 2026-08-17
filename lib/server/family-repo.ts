@@ -128,7 +128,7 @@ async function insertPerson(sql: Sql, person: Person): Promise<void> {
       ${person.notes}, ${JSON.stringify(person.tags)}::jsonb,
       ${person.prefix}, ${person.suffix}, ${person.birthLastName}, ${person.birthPlace},
       ${person.deathPlace}, ${person.burialPlace}, ${person.causeOfDeath},
-      ${person.createdAt}::timestamptz, ${person.updatedAt}::timestamptz
+      ${person.createdAt}, ${person.updatedAt}
     )
   `;
 }
@@ -138,7 +138,7 @@ async function insertRelationship(sql: Sql, rel: Relationship): Promise<void> {
     INSERT INTO relationships (id, source_person_id, target_person_id, type, metadata, created_at)
     VALUES (
       ${rel.id}, ${rel.sourcePersonId}, ${rel.targetPersonId}, ${rel.type},
-      ${JSON.stringify(rel.metadata)}::jsonb, ${rel.createdAt}::timestamptz
+      ${JSON.stringify(rel.metadata ?? {})}::jsonb, ${rel.createdAt}
     )
   `;
 }

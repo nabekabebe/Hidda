@@ -1,4 +1,4 @@
-import { buildGraph, descendantBranchOf } from "./graph";
+import { buildGraph, descendantBranchOf } from "./graph.js";
 import {
   SNAPSHOT_VERSION,
   isLiving,
@@ -17,7 +17,7 @@ import {
   type Source,
   type Story,
   type TreeMember,
-} from "./types";
+} from "./types.js";
 
 export const DEFAULT_ATLAS_NAME = "Untitled atlas";
 

@@ -26,10 +26,16 @@ export default async function handler(_req: ApiRequest, res: ApiResponse) {
       database: "connected",
     });
   } catch (error) {
+    const message =
+      error instanceof Error
+        ? error.cause instanceof Error
+          ? `${error.message}: ${error.cause.message}`
+          : error.message
+        : "Database ping failed";
     res.status(500).json({
       ok: false,
       database: "error",
-      error: error instanceof Error ? error.message : "Database ping failed",
+      error: message,
     });
   }
 }

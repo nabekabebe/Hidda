@@ -1,4 +1,4 @@
-import { emptyDraft, personFromDraft, type Person, type Relationship } from "./types";
+import { emptyDraft, personFromDraft, type Person, type Relationship } from "./types.js";
 
 const now = "2026-03-12T10:00:00.000Z";
 

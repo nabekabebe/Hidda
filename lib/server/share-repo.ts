@@ -33,7 +33,7 @@ export async function insertShare(sql: Sql, record: ShareRecord): Promise<ShareR
       ${record.scope},
       ${record.rootPersonId ?? null},
       ${JSON.stringify(snapshot)}::jsonb,
-      ${record.createdAt}::timestamptz
+      ${record.createdAt}
     )
     ON CONFLICT (token) DO UPDATE SET
       permission = EXCLUDED.permission,

@@ -1,13 +1,18 @@
-import { neon, type NeonQueryFunction } from "@neondatabase/serverless";
+import postgres from "postgres";
 
-export type Sql = NeonQueryFunction<false, false>;
+export type Sql = postgres.Sql;
 
 export function getDatabaseUrl(): string | undefined {
-  const url =
-    process.env.POSTGRES_URL?.trim() ||
-    process.env.DATABASE_URL?.trim() ||
-    process.env.POSTGRES_PRISMA_URL?.trim();
-  return url || undefined;
+  const candidates = [
+    process.env.POSTGRES_URL,
+    process.env.POSTGRES_URL_NON_POOLING,
+    process.env.DATABASE_URL,
+  ];
+  for (const value of candidates) {
+    const url = value?.trim();
+    if (url && !url.startsWith("prisma+")) return url;
+  }
+  return undefined;
 }
 
 let cached: Sql | null | undefined;
@@ -15,6 +20,14 @@ let cached: Sql | null | undefined;
 export function getSql(): Sql | null {
   if (cached !== undefined) return cached;
   const url = getDatabaseUrl();
-  cached = url ? neon(url) : null;
+  cached = url
+    ? postgres(url, {
+        ssl: "require",
+        max: 1,
+        idle_timeout: 20,
+        connect_timeout: 10,
+        prepare: false,
+      })
+    : null;
   return cached;
 }
