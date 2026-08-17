@@ -43,6 +43,19 @@ export async function ensureSchema(sql: Sql): Promise<void> {
     VALUES ('default', 'Untitled atlas', '[]'::jsonb)
     ON CONFLICT (id) DO NOTHING
   `;
+  await sql`ALTER TABLE atlas_meta ADD COLUMN IF NOT EXISTS catalog JSONB NOT NULL DEFAULT '{}'::jsonb`;
+  await sql`ALTER TABLE people ADD COLUMN IF NOT EXISTS prefix TEXT NOT NULL DEFAULT ''`;
+  await sql`ALTER TABLE people ADD COLUMN IF NOT EXISTS suffix TEXT NOT NULL DEFAULT ''`;
+  await sql`ALTER TABLE people ADD COLUMN IF NOT EXISTS birth_last_name TEXT NOT NULL DEFAULT ''`;
+  await sql`ALTER TABLE people ADD COLUMN IF NOT EXISTS birth_place TEXT NOT NULL DEFAULT ''`;
+  await sql`ALTER TABLE people ADD COLUMN IF NOT EXISTS death_place TEXT NOT NULL DEFAULT ''`;
+  await sql`ALTER TABLE people ADD COLUMN IF NOT EXISTS burial_place TEXT NOT NULL DEFAULT ''`;
+  await sql`ALTER TABLE people ADD COLUMN IF NOT EXISTS cause_of_death TEXT NOT NULL DEFAULT ''`;
+  await sql`
+    ALTER TABLE shares ADD COLUMN IF NOT EXISTS expires_at TIMESTAMPTZ
+  `;
+  await sql`ALTER TABLE shares ADD COLUMN IF NOT EXISTS password_hash TEXT`;
+  await sql`ALTER TABLE shares ADD COLUMN IF NOT EXISTS revoked BOOLEAN NOT NULL DEFAULT FALSE`;
   await sql`
     CREATE TABLE IF NOT EXISTS shares (
       token TEXT PRIMARY KEY,

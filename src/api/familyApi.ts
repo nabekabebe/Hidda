@@ -1,6 +1,6 @@
 import { HttpFamilyApi } from "@/api/httpFamilyApi";
 import { SEED_PEOPLE, SEED_RELATIONSHIPS } from "@/domain/seed";
-import { DEFAULT_ATLAS_NAME, emptyInscriptions, normalizeSnapshot } from "@/domain/share";
+import { DEFAULT_ATLAS_NAME, emptyCatalog, emptyInscriptions, normalizeSnapshot } from "@/domain/share";
 import {
   personFromDraft,
   type AtlasInscription,
@@ -27,7 +27,8 @@ export interface FamilyApi {
   deleteRelationship(id: string): Promise<void>;
   resetToSeed(): Promise<FamilySnapshot>;
   clearAll(): Promise<FamilySnapshot>;
-  updateAtlas(patch: { name?: string; inscriptions?: AtlasInscription[] }): Promise<FamilySnapshot>;
+  updateAtlas(patch: Partial<Pick<FamilySnapshot, "name" | "inscriptions" | "homePersonId">>): Promise<FamilySnapshot>;
+  replaceSnapshot(snapshot: FamilySnapshot): Promise<FamilySnapshot>;
 }
 
 function uid(): string {
@@ -43,6 +44,7 @@ export class MemoryFamilyApi implements FamilyApi {
   private relationships = new Map<string, Relationship>();
   private name = DEFAULT_ATLAS_NAME;
   private inscriptions: AtlasInscription[] = [];
+  private catalog = emptyCatalog();
   private readonly persistFn: (snapshot: FamilySnapshot) => void;
   private readonly readOnly: boolean;
 
@@ -84,17 +86,34 @@ export class MemoryFamilyApi implements FamilyApi {
     this.relationships = new Map(next.relationships.map((rel) => [rel.id, clone(rel)]));
     this.name = next.name;
     this.inscriptions = clone(next.inscriptions);
+    this.catalog = {
+      version: next.version,
+      homePersonId: next.homePersonId,
+      events: clone(next.events),
+      media: clone(next.media),
+      sources: clone(next.sources),
+      citations: clone(next.citations),
+      stories: clone(next.stories),
+      comments: clone(next.comments),
+      tasks: clone(next.tasks),
+      audit: clone(next.audit),
+      recycleBin: clone(next.recycleBin),
+      members: clone(next.members),
+    };
     if (persist) this.persist();
   }
 
   private applySeed() {
-    this.people = new Map(SEED_PEOPLE.map((person) => [person.id, clone(person)]));
-    this.relationships = new Map(SEED_RELATIONSHIPS.map((rel) => [rel.id, clone(rel)]));
-    this.name = "Solano family";
-    this.inscriptions = [
-      { id: "title-solano", text: "Solano family", x: 280, y: -56, kind: "title" },
-    ];
-    this.persist();
+    this.applySnapshot(
+      normalizeSnapshot({
+        people: SEED_PEOPLE,
+        relationships: SEED_RELATIONSHIPS,
+        name: "Solano family",
+        inscriptions: [{ id: "title-solano", text: "Solano family", x: 280, y: -56, kind: "title" }],
+        homePersonId: "mira",
+      }),
+      true,
+    );
   }
 
   private persist() {
@@ -103,12 +122,13 @@ export class MemoryFamilyApi implements FamilyApi {
   }
 
   private snapshot(): FamilySnapshot {
-    return {
+    return normalizeSnapshot({
+      ...this.catalog,
       people: [...this.people.values()],
       relationships: [...this.relationships.values()],
       name: this.name,
       inscriptions: clone(this.inscriptions),
-    };
+    });
   }
 
   private guardWrite() {
@@ -194,15 +214,25 @@ export class MemoryFamilyApi implements FamilyApi {
     this.relationships.clear();
     this.name = DEFAULT_ATLAS_NAME;
     this.inscriptions = emptyInscriptions();
+    this.catalog = emptyCatalog();
     this.persist();
     return this.snapshot();
   }
 
-  async updateAtlas(patch: { name?: string; inscriptions?: AtlasInscription[] }): Promise<FamilySnapshot> {
+  async updateAtlas(
+    patch: Partial<Pick<FamilySnapshot, "name" | "inscriptions" | "homePersonId">>,
+  ): Promise<FamilySnapshot> {
     this.guardWrite();
     if (patch.name !== undefined) this.name = patch.name.trim() || DEFAULT_ATLAS_NAME;
     if (patch.inscriptions) this.inscriptions = clone(patch.inscriptions);
+    if (patch.homePersonId !== undefined) this.catalog.homePersonId = patch.homePersonId;
     this.persist();
+    return this.snapshot();
+  }
+
+  async replaceSnapshot(snapshot: FamilySnapshot): Promise<FamilySnapshot> {
+    this.guardWrite();
+    this.applySnapshot(snapshot, true);
     return this.snapshot();
   }
 }

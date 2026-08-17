@@ -28,6 +28,13 @@ interface PersonRow {
   tags: string[] | string;
   created_at: string | Date;
   updated_at: string | Date;
+  prefix?: string;
+  suffix?: string;
+  birth_last_name?: string;
+  birth_place?: string;
+  death_place?: string;
+  burial_place?: string;
+  cause_of_death?: string;
 }
 
 interface RelationshipRow {
@@ -71,9 +78,12 @@ function asMetadata(value: RelationshipRow["metadata"]): Record<string, string> 
 function personFromRow(row: PersonRow): Person {
   return {
     id: row.id,
+    prefix: row.prefix ?? "",
     firstName: row.first_name,
     middleName: row.middle_name,
     lastName: row.last_name,
+    suffix: row.suffix ?? "",
+    birthLastName: row.birth_last_name ?? "",
     nickname: row.nickname,
     avatar: row.avatar,
     gender: row.gender,
@@ -82,6 +92,10 @@ function personFromRow(row: PersonRow): Person {
     description: row.description,
     occupation: row.occupation,
     location: row.location,
+    birthPlace: row.birth_place || row.location,
+    deathPlace: row.death_place ?? "",
+    burialPlace: row.burial_place ?? "",
+    causeOfDeath: row.cause_of_death ?? "",
     notes: row.notes,
     tags: asTags(row.tags),
     createdAt: asIso(row.created_at),
@@ -105,13 +119,16 @@ async function insertPerson(sql: Sql, person: Person): Promise<void> {
     INSERT INTO people (
       id, first_name, middle_name, last_name, nickname, avatar, gender,
       birth_date, death_date, description, occupation, location, notes, tags,
+      prefix, suffix, birth_last_name, birth_place, death_place, burial_place, cause_of_death,
       created_at, updated_at
     ) VALUES (
       ${person.id}, ${person.firstName}, ${person.middleName}, ${person.lastName},
       ${person.nickname}, ${person.avatar}, ${person.gender}, ${person.birthDate},
       ${person.deathDate}, ${person.description}, ${person.occupation}, ${person.location},
-      ${person.notes}, ${JSON.stringify(person.tags)}::jsonb, ${person.createdAt}::timestamptz,
-      ${person.updatedAt}::timestamptz
+      ${person.notes}, ${JSON.stringify(person.tags)}::jsonb,
+      ${person.prefix}, ${person.suffix}, ${person.birthLastName}, ${person.birthPlace},
+      ${person.deathPlace}, ${person.burialPlace}, ${person.causeOfDeath},
+      ${person.createdAt}::timestamptz, ${person.updatedAt}::timestamptz
     )
   `;
 }
@@ -129,9 +146,10 @@ async function insertRelationship(sql: Sql, rel: Relationship): Promise<void> {
 export async function loadSnapshot(sql: Sql): Promise<FamilySnapshot> {
   const people = (await sql`SELECT * FROM people ORDER BY created_at, id`) as PersonRow[];
   const relationships = (await sql`SELECT * FROM relationships ORDER BY created_at, id`) as RelationshipRow[];
-  const metaRows = (await sql`SELECT name, inscriptions FROM atlas_meta WHERE id = 'default' LIMIT 1`) as {
+  const metaRows = (await sql`SELECT name, inscriptions, catalog FROM atlas_meta WHERE id = 'default' LIMIT 1`) as {
     name: string;
     inscriptions: AtlasInscription[] | string;
+    catalog?: unknown;
   }[];
   const meta = metaRows[0];
   let inscriptions: AtlasInscription[] = [];
@@ -140,7 +158,14 @@ export async function loadSnapshot(sql: Sql): Promise<FamilySnapshot> {
       ? meta.inscriptions
       : (JSON.parse(String(meta.inscriptions)) as AtlasInscription[]);
   }
+  const catalog =
+    meta?.catalog && typeof meta.catalog === "object"
+      ? meta.catalog
+      : typeof meta?.catalog === "string"
+        ? JSON.parse(meta.catalog)
+        : {};
   return normalizeSnapshot({
+    ...(catalog as Partial<FamilySnapshot>),
     people: people.map(personFromRow),
     relationships: relationships.map(relationshipFromRow),
     name: meta?.name,
@@ -148,19 +173,58 @@ export async function loadSnapshot(sql: Sql): Promise<FamilySnapshot> {
   });
 }
 
+function catalogPayload(snapshot: FamilySnapshot) {
+  return {
+    version: snapshot.version,
+    homePersonId: snapshot.homePersonId,
+    events: snapshot.events,
+    media: snapshot.media,
+    sources: snapshot.sources,
+    citations: snapshot.citations,
+    stories: snapshot.stories,
+    comments: snapshot.comments,
+    tasks: snapshot.tasks,
+    audit: snapshot.audit,
+    recycleBin: snapshot.recycleBin,
+    members: snapshot.members,
+  };
+}
+
 export async function updateAtlas(
   sql: Sql,
-  patch: { name?: string; inscriptions?: AtlasInscription[] },
+  patch: Partial<Pick<FamilySnapshot, "name" | "inscriptions" | "homePersonId">>,
 ): Promise<FamilySnapshot> {
   const current = await loadSnapshot(sql);
-  const name = patch.name !== undefined ? patch.name.trim() || DEFAULT_ATLAS_NAME : current.name;
-  const inscriptions = patch.inscriptions ?? current.inscriptions;
+  const next = normalizeSnapshot({
+    ...current,
+    name: patch.name !== undefined ? patch.name.trim() || DEFAULT_ATLAS_NAME : current.name,
+    inscriptions: patch.inscriptions ?? current.inscriptions,
+    homePersonId: patch.homePersonId !== undefined ? patch.homePersonId : current.homePersonId,
+  });
   await sql`
-    INSERT INTO atlas_meta (id, name, inscriptions)
-    VALUES ('default', ${name}, ${JSON.stringify(inscriptions)}::jsonb)
+    INSERT INTO atlas_meta (id, name, inscriptions, catalog)
+    VALUES ('default', ${next.name}, ${JSON.stringify(next.inscriptions)}::jsonb, ${JSON.stringify(catalogPayload(next))}::jsonb)
     ON CONFLICT (id) DO UPDATE SET
       name = EXCLUDED.name,
-      inscriptions = EXCLUDED.inscriptions
+      inscriptions = EXCLUDED.inscriptions,
+      catalog = EXCLUDED.catalog
+  `;
+  return loadSnapshot(sql);
+}
+
+export async function replaceSnapshot(sql: Sql, snapshot: FamilySnapshot): Promise<FamilySnapshot> {
+  const next = normalizeSnapshot(snapshot);
+  await sql`DELETE FROM relationships`;
+  await sql`DELETE FROM people`;
+  for (const person of next.people) await insertPerson(sql, person);
+  for (const rel of next.relationships) await insertRelationship(sql, rel);
+  await sql`
+    INSERT INTO atlas_meta (id, name, inscriptions, catalog)
+    VALUES ('default', ${next.name}, ${JSON.stringify(next.inscriptions)}::jsonb, ${JSON.stringify(catalogPayload(next))}::jsonb)
+    ON CONFLICT (id) DO UPDATE SET
+      name = EXCLUDED.name,
+      inscriptions = EXCLUDED.inscriptions,
+      catalog = EXCLUDED.catalog
   `;
   return loadSnapshot(sql);
 }
@@ -197,6 +261,13 @@ export async function updatePerson(sql: Sql, id: string, patch: Partial<PersonDr
       location = ${next.location},
       notes = ${next.notes},
       tags = ${JSON.stringify(next.tags)}::jsonb,
+      prefix = ${next.prefix},
+      suffix = ${next.suffix},
+      birth_last_name = ${next.birthLastName},
+      birth_place = ${next.birthPlace},
+      death_place = ${next.deathPlace},
+      burial_place = ${next.burialPlace},
+      cause_of_death = ${next.causeOfDeath},
       updated_at = ${next.updatedAt}::timestamptz
     WHERE id = ${id}
   `;

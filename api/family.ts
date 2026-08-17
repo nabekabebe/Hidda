@@ -1,4 +1,4 @@
-import type { AtlasInscription, PersonDraft, RelationshipKind } from "../src/domain/types.js";
+import type { AtlasInscription, FamilySnapshot, PersonDraft, RelationshipKind } from "../src/domain/types.js";
 import { getSql } from "./db.js";
 import {
   clearAll,
@@ -8,6 +8,7 @@ import {
   deleteRelationship,
   loadSnapshot,
   resetToSeed,
+  replaceSnapshot,
   updateAtlas,
   updatePerson,
 } from "./family-repo.js";
@@ -22,7 +23,8 @@ type FamilyOp =
   | { op: "deleteRelationship"; id: string }
   | { op: "resetToSeed" }
   | { op: "clearAll" }
-  | { op: "updateAtlas"; patch: { name?: string; inscriptions?: AtlasInscription[] } };
+  | { op: "updateAtlas"; patch: { name?: string; inscriptions?: AtlasInscription[]; homePersonId?: string | null } }
+  | { op: "replaceSnapshot"; snapshot: FamilySnapshot };
 
 function unconfigured(res: ApiResponse) {
   res.status(503).json({
@@ -86,6 +88,9 @@ export default async function handler(req: ApiRequest, res: ApiResponse) {
         return;
       case "updateAtlas":
         res.status(200).json(await updateAtlas(sql, body.patch));
+        return;
+      case "replaceSnapshot":
+        res.status(200).json(await replaceSnapshot(sql, body.snapshot));
         return;
       default:
         res.status(400).json({ error: "Unknown op" });

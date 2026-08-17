@@ -1,5 +1,5 @@
 import type { FamilyApi } from "./familyApi";
-import type { AtlasInscription, FamilySnapshot, Person, PersonDraft, Relationship, RelationshipKind } from "@/domain/types";
+import type { FamilySnapshot, Person, PersonDraft, Relationship, RelationshipKind } from "@/domain/types";
 import { normalizeSnapshot } from "@/domain/share";
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
@@ -60,7 +60,11 @@ export class HttpFamilyApi implements FamilyApi {
     return request("/api/family", { method: "POST", body: JSON.stringify({ op: "clearAll" }) });
   }
 
-  updateAtlas(patch: { name?: string; inscriptions?: AtlasInscription[] }): Promise<FamilySnapshot> {
+  updateAtlas(patch: Partial<Pick<FamilySnapshot, "name" | "inscriptions" | "homePersonId">>): Promise<FamilySnapshot> {
     return request("/api/family", { method: "POST", body: JSON.stringify({ op: "updateAtlas", patch }) });
+  }
+
+  replaceSnapshot(snapshot: FamilySnapshot): Promise<FamilySnapshot> {
+    return request("/api/family", { method: "POST", body: JSON.stringify({ op: "replaceSnapshot", snapshot }) });
   }
 }

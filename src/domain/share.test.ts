@@ -31,4 +31,17 @@ describe("share snapshot", () => {
     const graph = buildGraph(sliced.people, sliced.relationships);
     expect(graph.byId.has("mira")).toBe(true);
   });
+
+  it("migrates a v1 snapshot with extra catalog fields", () => {
+    const sliced = sliceSnapshot({
+      people: SEED_PEOPLE,
+      relationships: SEED_RELATIONSHIPS,
+      name: "Solano family",
+    } as never);
+    expect(sliced.version).toBe(2);
+    expect(sliced.homePersonId).toBe("ruth");
+    expect(sliced.people[0]?.prefix).toBe("");
+    expect(sliced.people[0]?.birthPlace).toBe(sliced.people[0]?.location);
+    expect(sliced.events).toEqual([]);
+  });
 });

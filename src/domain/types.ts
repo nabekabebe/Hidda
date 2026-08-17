@@ -20,9 +20,12 @@ export type CompassRelation = "parent" | "child" | "spouse" | "sibling";
 
 export interface Person {
   id: string;
+  prefix: string;
   firstName: string;
   middleName: string;
   lastName: string;
+  suffix: string;
+  birthLastName: string;
   nickname: string;
   avatar: string;
   gender: Gender;
@@ -31,6 +34,10 @@ export interface Person {
   description: string;
   occupation: string;
   location: string;
+  birthPlace: string;
+  deathPlace: string;
+  burialPlace: string;
+  causeOfDeath: string;
   notes: string;
   tags: string[];
   createdAt: string;
@@ -47,9 +54,12 @@ export interface Relationship {
 }
 
 export interface PersonDraft {
+  prefix: string;
   firstName: string;
   middleName: string;
   lastName: string;
+  suffix: string;
+  birthLastName: string;
   nickname: string;
   avatar: string;
   gender: Gender;
@@ -58,15 +68,140 @@ export interface PersonDraft {
   description: string;
   occupation: string;
   location: string;
+  birthPlace: string;
+  deathPlace: string;
+  burialPlace: string;
+  causeOfDeath: string;
   notes: string;
   tags: string[];
 }
 
+export const SNAPSHOT_VERSION = 2;
+
+export type EventType =
+  | "birth"
+  | "baptism"
+  | "christening"
+  | "marriage"
+  | "divorce"
+  | "partnership"
+  | "death"
+  | "burial"
+  | "cremation"
+  | "residence"
+  | "occupation"
+  | "education"
+  | "immigration"
+  | "census"
+  | "other";
+
+export interface FamilyEvent {
+  id: string;
+  type: EventType;
+  personId: string;
+  spousePersonId?: string;
+  relationshipId?: string;
+  date: string;
+  place: string;
+  detail: string;
+}
+
+export type MediaKind = "photo" | "document" | "audio";
+
+export interface MediaItem {
+  id: string;
+  kind: MediaKind;
+  personIds: string[];
+  caption: string;
+  mimeType: string;
+  blobKey: string;
+  createdAt: string;
+}
+
+export interface Source {
+  id: string;
+  title: string;
+  author: string;
+  publisher: string;
+  url: string;
+  notes: string;
+}
+
+export interface Citation {
+  id: string;
+  sourceId: string;
+  eventId?: string;
+  personId?: string;
+  field?: string;
+  page: string;
+  quote: string;
+}
+
+export interface Story {
+  id: string;
+  personId: string;
+  title: string;
+  body: string;
+  date: string;
+}
+
+export interface Comment {
+  id: string;
+  personId: string;
+  authorName: string;
+  body: string;
+  createdAt: string;
+}
+
+export interface ResearchTask {
+  id: string;
+  personId?: string;
+  title: string;
+  done: boolean;
+  createdAt: string;
+}
+
+export interface AuditEvent {
+  id: string;
+  at: string;
+  action: string;
+  detail: string;
+  personId?: string;
+}
+
+export interface RecycleEntry {
+  person: Person;
+  relationships: Relationship[];
+  deletedAt: string;
+}
+
+export type MemberRole = "owner" | "edit" | "view";
+
+export interface TreeMember {
+  id: string;
+  email: string;
+  name: string;
+  role: MemberRole;
+  invitedAt: string;
+}
+
 export interface FamilySnapshot {
+  version: number;
   people: Person[];
   relationships: Relationship[];
   name: string;
   inscriptions: AtlasInscription[];
+  homePersonId: string | null;
+  events: FamilyEvent[];
+  media: MediaItem[];
+  sources: Source[];
+  citations: Citation[];
+  stories: Story[];
+  comments: Comment[];
+  tasks: ResearchTask[];
+  audit: AuditEvent[];
+  recycleBin: RecycleEntry[];
+  members: TreeMember[];
 }
 
 export type InscriptionKind = "title" | "section";
@@ -90,6 +225,9 @@ export interface ShareRecord {
   rootPersonId?: string;
   snapshot: FamilySnapshot;
   createdAt: string;
+  expiresAt?: string;
+  passwordHash?: string;
+  revoked?: boolean;
 }
 
 export interface TreeFilters {
@@ -105,9 +243,12 @@ export interface TreeFilters {
 }
 
 export const emptyDraft = (): PersonDraft => ({
+  prefix: "",
   firstName: "",
   middleName: "",
   lastName: "",
+  suffix: "",
+  birthLastName: "",
   nickname: "",
   avatar: "",
   gender: "unknown",
@@ -116,6 +257,10 @@ export const emptyDraft = (): PersonDraft => ({
   description: "",
   occupation: "",
   location: "",
+  birthPlace: "",
+  deathPlace: "",
+  burialPlace: "",
+  causeOfDeath: "",
   notes: "",
   tags: [],
 });
@@ -137,7 +282,9 @@ export function fullName(person: Pick<Person, "firstName" | "middleName" | "last
 }
 
 export function displayName(person: Person): string {
-  return fullName(person) || "Unnamed";
+  const core = [person.prefix, person.firstName, person.middleName, person.lastName].filter(Boolean).join(" ");
+  const withSuffix = person.suffix ? `${core} ${person.suffix}` : core;
+  return withSuffix.trim() || "Unnamed";
 }
 
 export function catalogYear(person: Person): string {
@@ -179,6 +326,7 @@ export function isPartnerType(type: RelationshipKind): type is PartnerKind {
 export function personFromDraft(id: string, draft: PersonDraft, now: string): Person {
   return {
     id,
+    ...emptyDraft(),
     ...draft,
     createdAt: now,
     updatedAt: now,

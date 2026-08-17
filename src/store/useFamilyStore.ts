@@ -11,9 +11,10 @@ import {
 } from "@/domain/graph";
 import { layoutTree, type TreeLayout } from "@/domain/layout";
 import { personMatchesFilters } from "@/domain/search";
-import { DEFAULT_ATLAS_NAME } from "@/domain/share";
+import { DEFAULT_ATLAS_NAME, normalizeSnapshot } from "@/domain/share";
 import { SEED_FOCUS_ID } from "@/domain/seed";
 import {
+  SNAPSHOT_VERSION,
   defaultFilters,
   type AccessMode,
   type AtlasInscription,
@@ -42,6 +43,17 @@ interface FamilyState {
   relationships: Relationship[];
   atlasName: string;
   inscriptions: AtlasInscription[];
+  homePersonId: string | null;
+  events: FamilySnapshot["events"];
+  media: FamilySnapshot["media"];
+  sources: FamilySnapshot["sources"];
+  citations: FamilySnapshot["citations"];
+  stories: FamilySnapshot["stories"];
+  comments: FamilySnapshot["comments"];
+  tasks: FamilySnapshot["tasks"];
+  audit: FamilySnapshot["audit"];
+  recycleBin: FamilySnapshot["recycleBin"];
+  members: FamilySnapshot["members"];
   access: AccessMode;
   shareToken: string | null;
   shareMissing: boolean;
@@ -102,6 +114,17 @@ export const useFamilyStore = create<FamilyState>((set, get) => ({
   relationships: [],
   atlasName: DEFAULT_ATLAS_NAME,
   inscriptions: [],
+  homePersonId: null,
+  events: [],
+  media: [],
+  sources: [],
+  citations: [],
+  stories: [],
+  comments: [],
+  tasks: [],
+  audit: [],
+  recycleBin: [],
+  members: [],
   access: "owner",
   shareToken: null,
   shareMissing: false,
@@ -142,10 +165,8 @@ export const useFamilyStore = create<FamilyState>((set, get) => ({
     const record = await loadShareRecord(token);
     if (!record) {
       set({
+        ...atlasFields(normalizeSnapshot({})),
         ready: true,
-        people: [],
-        relationships: [],
-        inscriptions: [],
         shareMissing: true,
         access: "view",
         shareToken: token,
@@ -175,6 +196,7 @@ export const useFamilyStore = create<FamilyState>((set, get) => ({
   },
 
   snapshot: () => ({
+    ...getCatalog(get()),
     people: get().people,
     relationships: get().relationships,
     name: get().atlasName,
@@ -399,14 +421,45 @@ function atlasFields(snap: FamilySnapshot) {
     relationships: snap.relationships,
     atlasName: snap.name,
     inscriptions: snap.inscriptions,
+    homePersonId: snap.homePersonId,
+    events: snap.events,
+    media: snap.media,
+    sources: snap.sources,
+    citations: snap.citations,
+    stories: snap.stories,
+    comments: snap.comments,
+    tasks: snap.tasks,
+    audit: snap.audit,
+    recycleBin: snap.recycleBin,
+    members: snap.members,
+  };
+}
+
+function getCatalog(state: Pick<FamilyState, "homePersonId" | "events" | "media" | "sources" | "citations" | "stories" | "comments" | "tasks" | "audit" | "recycleBin" | "members">) {
+  return {
+    version: SNAPSHOT_VERSION,
+    homePersonId: state.homePersonId,
+    events: state.events,
+    media: state.media,
+    sources: state.sources,
+    citations: state.citations,
+    stories: state.stories,
+    comments: state.comments,
+    tasks: state.tasks,
+    audit: state.audit,
+    recycleBin: state.recycleBin,
+    members: state.members,
   };
 }
 
 export function draftFromPerson(person: Person): PersonDraft {
   return {
+    prefix: person.prefix,
     firstName: person.firstName,
     middleName: person.middleName,
     lastName: person.lastName,
+    suffix: person.suffix,
+    birthLastName: person.birthLastName,
     nickname: person.nickname,
     avatar: person.avatar,
     gender: person.gender,
@@ -415,6 +468,10 @@ export function draftFromPerson(person: Person): PersonDraft {
     description: person.description,
     occupation: person.occupation,
     location: person.location,
+    birthPlace: person.birthPlace,
+    deathPlace: person.deathPlace,
+    burialPlace: person.burialPlace,
+    causeOfDeath: person.causeOfDeath,
     notes: person.notes,
     tags: person.tags,
   };
