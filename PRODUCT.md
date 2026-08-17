@@ -49,9 +49,11 @@ Confirmed:
 
 Open:
 
-- Product name is not confirmed; working title is Family Tree until a brand name is chosen
-- No real GEDCOM import in this build
-- Photo storage is client-side (object URLs / in-memory) until a backend exists
+- Product name is not confirmed; working title is Night Atlas / Hidda
+- Accounts and extra atlases are local to the browser until Postgres and `VITE_FAMILY_API=http` are on in production
+- Share links are snapshot copies, not live collaboration on the owner tree
+- GitHub is not linked to Vercel, so pushes do not auto-deploy
+- See ROADMAP.md for remaining production blockers vs Ancestry / MyHeritage / Family Echo
 
 ## Brand Commitments
 
